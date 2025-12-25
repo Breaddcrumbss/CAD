@@ -26,17 +26,18 @@ from sailing import *
 
 # choose one of the following points of sail (see sailing.py)
 
-close_haul()
-#beam_reach()
+#close_haul()
+beam_reach()
+#broad_reach()
 #goose_wing()
 #play()
 
 if 'shapes' in sys.modules:
     del sys.modules['shapes']
 from shapes import * 
-if 'rig' in sys.modules:
-    del sys.modules['rig']
-from rig import * 
+if 'rotating' in sys.modules:
+    del sys.modules['rotating']
+from rotating import * 
 if 'mirror' in sys.modules:
     del sys.modules['mirror']
 from mirror import * 

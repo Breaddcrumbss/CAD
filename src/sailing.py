@@ -10,6 +10,14 @@ def close_haul():
 
 # beam reach: going perpendicular to the wind    
 def beam_reach():
+    parameters.sail_camber = 4000
+    parameters.biru_rig_rotation = 40
+    parameters.biru_sail_angle = -30
+    parameters.kuning_rig_rotation = 30
+    parameters.kuning_sail_angle = -30
+
+# broad reach: going with the wind from an aft quarter
+def broad_reach():
     parameters.sail_camber = 3000
     parameters.biru_rig_rotation = 50
     parameters.biru_sail_angle = -30
