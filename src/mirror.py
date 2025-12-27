@@ -292,8 +292,8 @@ def mirror(side):
     mast_step = side.newObject("Part::Feature", "Mast Step (aluminum)")
     mast_step.Shape = pipe(
         mast_step_outer_diameter,
-        mast_step_outer_diameter - mast_step_inner_diameter,
-        mast_step_thickness)
+        (mast_step_outer_diameter - mast_step_inner_diameter) / 2,
+        mast_step_height)
     mast_step.Placement = FreeCAD.Placement(
         Base.Vector(vaka_displacement,
                     mast_distance_from_center,

@@ -101,7 +101,7 @@ mast_partner_thickness = 50
 
 mast_step_outer_diameter = mast_diameter + 100
 mast_step_inner_diameter = mast_diameter
-mast_step_thickness = 100
+mast_step_height = 100
 
 mast_handle_diameter = 25
 mast_handle_thickness = 3

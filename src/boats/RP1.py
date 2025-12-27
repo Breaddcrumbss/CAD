@@ -24,13 +24,13 @@ ama_cone_length = 500
 stringer_width = 25
 stringer_thickness = 3
 
-aka_width = 76.2
-aka_height = 101.6
+aka_width = 50.8
+aka_height = 76.2
 aka_thickness = 4.5
 aka_length = panel_length * panels_transversal + deck_width
 
 aka_cap_thickness = 5
-aka_cap_diameter = 170
+aka_cap_diameter = 80
 
 vaka_length = 4200
 vaka_width = 500
@@ -90,9 +90,9 @@ vaka_displacement = (- pillar_width / 2
 gunwale_width = 3 * mm_in_one_inch
 gunwale_height = 2 * mm_in_one_inch
 
-mast_diameter = 100
+mast_diameter = 80
 mast_thickness = 5
-mast_height = 5500
+mast_height = 5000
 mast_distance_from_center = vaka_length / 4 # adjustment to not cut into aka
 
 mast_partner_length = vaka_width - 110
@@ -101,7 +101,7 @@ mast_partner_thickness = 50
 
 mast_step_outer_diameter = mast_diameter + 100
 mast_step_inner_diameter = mast_diameter
-mast_step_thickness = 100
+mast_step_height = 100
 
 mast_handle_diameter = 25
 mast_handle_thickness = 3
@@ -120,13 +120,13 @@ yard_spar_height = mast_height - yard_spar_distance_from_top
 # Sail parameters (tanja sail)
 yard_diameter = 25
 yard_thickness = 2.8
-yard_length = 3500
+yard_length = 3000
 
 boom_diameter = yard_diameter
 boom_thickness = yard_thickness
 boom_length = yard_length
 
-sail_height = 3500  # vertical distance between yard and boom
+sail_height = 3000  # vertical distance between yard and boom
 sail_width  = yard_length
 sail_thickness = 2  # thin membrane
 
