@@ -44,8 +44,37 @@ def export_renders(fcstd_path, output_dir):
     print(f"Opening {fcstd_path}...")
     doc = App.openDocument(fcstd_path)
     
+    # Create GUI document and view
+    print("Creating 3D view...")
+    Gui.setupWithoutGUI()
+    Gui.activateWorkbench("PartWorkbench")
+    
+    # Get or create a view
+    view = Gui.activeView()
+    if not view:
+        # Create a new 3D view
+        Gui.getDocument(doc.Name)
+        view = Gui.ActiveDocument.ActiveView
+    
+    if not view:
+        print("ERROR: Could not create view")
+        App.closeDocument(doc.Name)
+        return False
+    
+    print(f"View created: {view}")
+    
     # Get base name for output files
     base_name = os.path.splitext(os.path.basename(fcstd_path))[0]
+    
+    # Make all objects visible
+    print("Setting objects visible...")
+    for obj in doc.Objects:
+        if hasattr(obj, 'ViewObject') and obj.ViewObject:
+            try:
+                if 'Origin' not in obj.Name:
+                    obj.ViewObject.Visibility = True
+            except:
+                pass
     
     # Define views to export
     views = [
@@ -55,16 +84,11 @@ def export_renders(fcstd_path, output_dir):
         ('Right', 'viewRight'),
     ]
     
-    # Get active view
-    view = Gui.activeView()
-    
-    if not view:
-        print("ERROR: No active view available")
-        App.closeDocument(doc.Name)
-        return False
-    
     # Disable animation for faster rendering
-    view.setAnimationEnabled(False)
+    try:
+        view.setAnimationEnabled(False)
+    except:
+        pass
     
     # Export each view
     for view_name, view_method in views:
