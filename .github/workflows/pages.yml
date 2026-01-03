@@ -18,15 +18,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      - name: Cache FreeCAD AppImage
+        id: cache-freecad
+        uses: actions/cache@v3
+        with:
+          path: |
+            FreeCAD.AppImage
+            squashfs-root
+          key: freecad-1.0.0-appimage
+      
       - name: Install FreeCAD AppImage
+        if: steps.cache-freecad.outputs.cache-hit != 'true'
         run: |
-          # Download latest FreeCAD AppImage
+          # Download FreeCAD 1.0.0 AppImage
           wget -O FreeCAD.AppImage https://github.com/FreeCAD/FreeCAD-Bundle/releases/download/1.0.0/FreeCAD_1.0.0-conda-Linux-x86_64-py311.AppImage
           chmod +x FreeCAD.AppImage
           
-          # Extract AppImage for easier use
+          # Extract AppImage
           ./FreeCAD.AppImage --appimage-extract
-          
+      
+      - name: Setup FreeCAD environment
+        run: |
           # Install xvfb for headless rendering
           sudo apt-get update
           sudo apt-get install -y xvfb
@@ -38,10 +50,6 @@ jobs:
           
           # Add to PATH
           echo "$PWD" >> $GITHUB_PATH
-      
-      - name: Verify FreeCAD installation
-        run: |
-          ./freecadcmd --version
       
       - name: Build all FreeCAD models
         run: |
