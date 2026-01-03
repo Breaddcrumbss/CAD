@@ -33,7 +33,7 @@ This site showcases automatically generated CAD models and renders for the Roti 
 {% if render_files.size > 0 %}
   {% for file in render_files %}
 ### {{ file.basename | replace: "_", " " }}
-![{{ file.basename }}]({{ file.path }})
+![{{ file.basename }}]({{ file.path | relative_url }})
   {% endfor %}
 {% else %}
   <p><em>No renders available yet. Renders will appear after the first successful build.</em></p>
