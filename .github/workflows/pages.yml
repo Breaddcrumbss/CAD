@@ -43,16 +43,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb
           
-          # Create wrapper script that executes Python scripts
+          # Create wrapper for running FreeCAD in console mode (for builds)
           cat > freecadcmd << 'WRAPPER_EOF'
           #!/bin/bash
-          # Wrapper to run FreeCAD Python scripts in console mode
-          SCRIPT="$1"
-          shift
-          xvfb-run -a ./squashfs-root/usr/bin/freecad --console -c "exec(open('$SCRIPT').read())"
+          xvfb-run -a ./squashfs-root/usr/bin/freecad --console "$@"
           WRAPPER_EOF
-          
           chmod +x freecadcmd
+          
+          # Create wrapper for running Python scripts (for renders)
+          cat > freecad-python << 'WRAPPER_EOF'
+          #!/bin/bash
+          export FREECAD_USER_HOME=/tmp/freecad
+          mkdir -p $FREECAD_USER_HOME
+          xvfb-run -a ./squashfs-root/usr/bin/python "$@"
+          WRAPPER_EOF
+          chmod +x freecad-python
           
           # Add to PATH
           echo "$PWD" >> $GITHUB_PATH

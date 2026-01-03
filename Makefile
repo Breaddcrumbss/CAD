@@ -105,7 +105,7 @@ render-all: $(RENDER_DIR)
 			if [ "$(UNAME)" = "Darwin" ]; then \
 				$(SRC_DIR)/export_renders_mac.sh "$$fcstd" "$(RENDER_DIR)" "$(FREECAD_APP)" || true; \
 			else \
-				FCSTD_FILE="$$fcstd" OUTPUT_DIR="$(RENDER_DIR)" $(FREECAD_CMD) $(SRC_DIR)/export_renders.py || true; \
+				FCSTD_FILE="$$fcstd" OUTPUT_DIR="$(RENDER_DIR)" freecad-python $(SRC_DIR)/export_renders.py || true; \
 			fi \
 		fi \
 	done
