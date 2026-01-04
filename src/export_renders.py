@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Export renders from FreeCAD files.
-Usage: freecadcmd export_renders.py <input.FCStd> <output_dir>
+Usage: freecadcmd export_renders.py <input.FCStd> <output_render>
 """
 
 import sys
@@ -66,7 +66,7 @@ def apply_colors_to_objects(doc):
     process_objects(doc.Objects)
 
 
-def export_renders(fcstd_path, output_dir):
+def export_renders(fcstd_path, output_render):
     """Export multiple views from an FCStd file as PNG images"""
     
     if not os.path.exists(fcstd_path):
@@ -74,7 +74,7 @@ def export_renders(fcstd_path, output_dir):
         return False
     
     # Create output directory
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_render, exist_ok=True)
     
     # Import Qt for headless rendering
     from PySide import QtGui
@@ -171,7 +171,7 @@ def export_renders(fcstd_path, output_dir):
         view.fitAll()
         
         # Export as PNG
-        output_path = os.path.join(output_dir, f"{base_name}_{view_name}.png")
+        output_path = os.path.join(output_render, f"{base_name}_{view_name}.png")
         view.saveImage(output_path, 1920, 1080, 'White')
         
         # Crop white borders using ImageMagick (more robust than PIL)
@@ -214,18 +214,18 @@ def export_renders(fcstd_path, output_dir):
 if __name__ == "__main__":
     # Get arguments from environment variables (passed by Makefile)
     fcstd_path = os.environ.get('FCSTD_FILE')
-    output_dir = os.environ.get('OUTPUT_DIR')
+    output_render = os.environ.get('OUTPUT_RENDER')
     
-    if not fcstd_path or not output_dir:
-        print("ERROR: FCSTD_FILE and OUTPUT_DIR environment variables must be set")
+    if not fcstd_path or not output_render:
+        print("ERROR: FCSTD_FILE and OUTPUT_RENDER environment variables must be set")
         print(f"FCSTD_FILE={fcstd_path}")
-        print(f"OUTPUT_DIR={output_dir}")
+        print(f"OUTPUT_RENDER={output_render}")
         sys.exit(1)
     
     print(f"Input file: {fcstd_path}")
-    print(f"Output dir: {output_dir}")
+    print(f"Output dir: {output_render}")
     
-    success = export_renders(fcstd_path, output_dir)
+    success = export_renders(fcstd_path, output_render)
     
     # Exit cleanly
     import os as _os

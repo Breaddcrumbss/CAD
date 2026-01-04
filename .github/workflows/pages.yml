@@ -70,7 +70,7 @@ jobs:
       
       - name: Generate statistics YAML files
         run: |
-          make stats-yaml
+          make stats
           echo "=== Generated YAML files ==="
           ls -la docs/_data/
           echo "=== Sample YAML content ==="

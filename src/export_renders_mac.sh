@@ -8,7 +8,7 @@ if [ $# -lt 2 ]; then
 fi
 
 FCSTD_FILE="$1"
-OUTPUT_DIR="$2"
+OUTPUT_RENDER="$2"
 FREECAD="${3:-/Applications/FreeCAD.app/Contents/MacOS/FreeCAD}"
 
 if [ ! -f "$FCSTD_FILE" ]; then
@@ -17,7 +17,7 @@ if [ ! -f "$FCSTD_FILE" ]; then
 fi
 
 # Create output directory
-mkdir -p "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_RENDER"
 
 # Get base name for output files
 BASENAME=$(basename "$FCSTD_FILE" .FCStd)
@@ -136,11 +136,11 @@ EOF
 
 # Run FreeCAD with the script
 echo "Rendering $FCSTD_FILE..."
-"$FREECAD" "$TEMP_SCRIPT" "$FCSTD_FILE" "$OUTPUT_DIR" "$BASENAME" 2>&1 | grep -v "Populating font" || true
+"$FREECAD" "$TEMP_SCRIPT" "$FCSTD_FILE" "$OUTPUT_RENDER" "$BASENAME" 2>&1 | grep -v "Populating font" || true
 
 # Check if renders were created
 EXPECTED_RENDERS=4
-ACTUAL_RENDERS=$(ls "$OUTPUT_DIR"/${BASENAME}_*.png 2>/dev/null | wc -l | tr -d ' ')
+ACTUAL_RENDERS=$(ls "$OUTPUT_RENDER"/${BASENAME}_*.png 2>/dev/null | wc -l | tr -d ' ')
 
 if [ "$ACTUAL_RENDERS" -ge "$EXPECTED_RENDERS" ]; then
     echo "Render complete for $BASENAME ($ACTUAL_RENDERS images created)"

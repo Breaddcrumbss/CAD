@@ -98,8 +98,8 @@ render: build $(RENDER_DIR)
 
 # Render all generated FCStd files
 # Generate YAML stats files for Jekyll
-.PHONY: stats-yaml
-stats-yaml: $(DESIGN_DIR)
+.PHONY: stats
+stats: $(DESIGN_DIR)
 	@echo "Generating YAML statistics for Jekyll..."
 	@mkdir -p $(DOCS_DIR)/_data
 	@for fcstd in $(DESIGN_DIR)/*.FCStd; do \
@@ -127,7 +127,7 @@ render-all: $(RENDER_DIR)
 			if [ "$(UNAME)" = "Darwin" ]; then \
 				$(SRC_DIR)/export_renders_mac.sh "$$fcstd" "$(RENDER_DIR)" "$(FREECAD_APP)" || true; \
 			else \
-				FCSTD_FILE="$$fcstd" DESIGN_DIR="$(RENDER_DIR)" freecad-python $(SRC_DIR)/export_renders.py || true; \
+				FCSTD_FILE="$$fcstd" OUTPUT_RENDER="$(RENDER_DIR)" freecad-python $(SRC_DIR)/export_renders.py || true; \
 			fi \
 		fi \
 	done
