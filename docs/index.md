@@ -3,13 +3,6 @@ layout: default
 title: Solar Proa - Wind-solar-powered Outrigger Boats
 ---
 
-<div style="text-align: center; padding: 2em 0;">
-  <h1 style="font-size: 2.5em; margin-bottom: 0.2em;">Prahu Surya Layar</h1>
-  <p style="font-size: 1.3em; color: #666; margin-top: 0;">Wind-solar-powered Hybrid Vessels for the Tropics</p>
-</div>
-
----
-
 ## Executive Summary
 
 Project _Solar Proa_ is developing wind-solar-powered hybrid vessels for carbon-neutral small-scale tropical maritime transport, exploration, and tourism.
