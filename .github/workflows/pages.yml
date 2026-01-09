@@ -72,10 +72,28 @@ jobs:
         run: |
           make render-all
       
+      - name: Generate downloads YAML files
+        run: |
+          python3 src/design/generate_downloads_yaml.py
+      
+      - name: Copy aggregate files to docs folder
+        run: |
+          mkdir -p docs/_data
+          # Copy JSON files and rename with Jekyll-friendly names (dots to underscores)
+          for file in artifacts/*.aggregate.json; do
+            if [ -f "$file" ]; then
+              basename=$(basename "$file" .aggregate.json)
+              # Convert rp2.closehaul to rp2_closehaul for Jekyll
+              newname=$(echo "$basename" | tr '.' '_')
+              cp "$file" "docs/_data/${newname}.json"
+              echo "Copied $file -> docs/_data/${newname}.json"
+            fi
+          done
+      
       - name: Copy renders to docs folder
         run: |
-          mkdir -p docs/artifacts
-          cp -r artifacts/* docs/artifacts/ || echo "Nothing to copy"
+          mkdir -p docs/renders
+          cp artifacts/*.png docs/renders/ 2>/dev/null || echo "No renders to copy"
       
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -104,8 +122,8 @@ jobs:
           ls -la _site/
           echo "=== Checking for data directory in source ==="
           ls -la docs/_data/ || echo "No _data directory"
-          echo "=== Sample YAML file content ==="
-          cat docs/_data/rp2_closehaul.yml
+          echo "=== Sample JSON file content ==="
+          cat docs/_data/rp2_closehaul.json 2>/dev/null || echo "File not found"
           echo "=== Sample page content (should show data values, not liquid tags) ==="
           grep -A5 "Overall Length" _site/rp2.html || echo "Page not found"
       

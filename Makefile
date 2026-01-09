@@ -320,36 +320,10 @@ render-all: $(RENDER_DIR)
 			boat=$$(echo "$$base" | cut -d'.' -f1); \
 			config=$$(echo "$$base" | cut -d'.' -f2); \
 			echo "Processing $$boat $$config..."; \
-			$(MAKE) render-only BOAT=$$boat CONFIG=$$config || true; \
+			$(MAKE) render-only BOAT=$$boat CONFIGURATION=$$config || true; \
 		fi \
 	done
 	@echo "All renders complete!"
-
-# Copy aggregate to Jekyll data directory
-$(JEKYLL_DATA): $(AGGREGATE_ARTIFACT) | $(DOCS_DATA_DIR)
-	@echo "Copying to Jekyll data: $(BOAT).$(CONFIGURATION)"
-	@mkdir -p $(DOCS_DATA_DIR)
-	@cp $< $@
-	@echo "✓ Jekyll data ready: $@"
-
-# Jekyll target copies to docs/_data
-jekyll: $(JEKYLL_DATA)
-	@echo "✓ Jekyll data ready for $(BOAT).$(CONFIGURATION)"
-	@echo "  Data file: $(JEKYLL_DATA)"
-
-# Generate Jekyll data for all existing aggregates
-jekyll-all:
-	@echo "Generating Jekyll data for all designs..."
-	@for agg in $(ARTIFACTS_DIR)/*.aggregate.json; do \
-		if [ -f "$$agg" ]; then \
-			base=$$(basename "$$agg" .aggregate.json); \
-			boat=$$(echo "$$base" | cut -d'.' -f1); \
-			config=$$(echo "$$base" | cut -d'.' -f2); \
-			echo "  Processing $$boat.$$config..."; \
-			$(MAKE) jekyll BOAT=$$boat CONFIGURATION=$$config || true; \
-		fi \
-	done
-	@echo "✓ All Jekyll data generated!"
 
 # ==============================================================================
 # CONFIGURATION-DRIVEN VALIDATION (read required_validators from configuration)
@@ -402,3 +376,15 @@ check:
 	@echo ""
 	@echo "System ready!"
 
+# Serve website locally
+.PHONY: localhost
+localhost:
+	@echo "Serving website in localhost..."
+	cd docs; bundle exec jekyll serve
+
+# Make zip file with just the newest versions of the git files
+.PHONY: zip
+zip:	clean
+	@echo "Make zip file with current working directory"
+	@rm -f ../CAD-clean.zip
+	git ls-files | zip -@ ../CAD-clean.zip

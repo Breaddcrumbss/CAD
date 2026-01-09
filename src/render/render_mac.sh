@@ -141,7 +141,7 @@ echo "Rendering $FCSTD_FILE..."
 
 # Check if renders were created
 EXPECTED_RENDERS=4
-ACTUAL_RENDERS=$(ls "$OUTPUT_DIR"/${BASENAME}_*.png 2>/dev/null | wc -l | tr -d ' ')
+ACTUAL_RENDERS=$(ls "$OUTPUT_DIR"/${BASENAME}.render.*.png 2>/dev/null | wc -l | tr -d ' ')
 
 if [ "$ACTUAL_RENDERS" -ge "$EXPECTED_RENDERS" ]; then
     echo "Render complete for $BASENAME ($ACTUAL_RENDERS images created)"

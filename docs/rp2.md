@@ -13,7 +13,7 @@ title: Roti Proa II - 9m Day Tourism Vessel
 ## Specifications
 
 **Overall Length:** {{ site.data.rp2_closehaul.parameters.vaka_length }}mm
-**Beam:** {{ site.data.rp2.closehaul.parameters.beam }}mm (with outrigger)  
+**Beam:** {{ site.data.rp2_closehaul.parameters.beam }}mm (with outrigger)  
 **Capacity:** 4 passengers + 2 crew  
 **Solar Power:** 4kW peak (8 panels)  
 **Motor Power:** 4kW electric  
