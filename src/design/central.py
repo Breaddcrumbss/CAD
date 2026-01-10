@@ -7,7 +7,6 @@ from FreeCAD import Base
 import math
 
 from shapes import *
-from material import *
 
 def central(vessel, params):
 

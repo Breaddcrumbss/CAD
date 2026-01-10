@@ -76,10 +76,6 @@ print("Importing central...")
 if 'central' in sys.modules: del sys.modules['central']
 from central import *
 
-print("Importing material...")
-if 'material' in sys.modules: del sys.modules['material']
-from material import *
-
 print("All imports complete")
 
 # Initialize headless GUI (Linux only) - MUST be done before creating document
