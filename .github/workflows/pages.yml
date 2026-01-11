@@ -127,9 +127,9 @@ jobs:
       - name: Copy FCStd models to downloads folder
         run: |
           mkdir -p docs/downloads
-          if ls artifacts/*.design.FCStd 1> /dev/null 2>&1; then
-            cp artifacts/*.design.FCStd docs/downloads/
-            echo "Copied $(ls artifacts/*.design.FCStd | wc -l) FCStd files"
+          if ls artifacts/*.FCStd 1> /dev/null 2>&1; then
+            cp artifacts/*.FCStd docs/downloads/
+            echo "Copied $(ls artifacts/*.FCStd | wc -l) FCStd files"
           else
             echo "WARNING: No FCStd files found in artifacts/"
           fi

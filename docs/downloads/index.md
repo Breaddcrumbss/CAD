@@ -48,7 +48,7 @@ These files can be opened in [FreeCAD](https://www.freecadweb.org/) for inspecti
 
 ## File Naming Convention
 
-Files are named: `{boat}.{configuration}.design.FCStd`
+Files are named: `{boat}.{configuration}.color.FCStd`
 
 - **boat**: `rp1`, `rp2`, `rp3` (Roti Proa models 1, 2, 3)
 - **configuration**: Sailing configuration (closehaul, beamreach, etc.)
