@@ -3,7 +3,8 @@
   "configuration_name": "goosewing",
   
   "required": [
-    "render"
+    "render",
+    "step"
   ],
   
   "sail_camber_biru": 10000,

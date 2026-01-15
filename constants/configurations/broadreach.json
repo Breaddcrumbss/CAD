@@ -3,7 +3,8 @@
   "configuration_name": "broadreach",
   
   "required": [
-    "render"
+    "render",
+    "step"
   ],
   
   "sail_camber_biru": 3000,

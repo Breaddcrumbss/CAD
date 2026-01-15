@@ -3,8 +3,8 @@
   "configuration_name": "closehaul",
   
   "required": [
-      "render",
-      "step"
+    "render",
+    "step"
   ],
   
   "sail_camber_biru": 5000,
