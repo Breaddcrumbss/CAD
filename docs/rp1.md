@@ -67,28 +67,25 @@ This comprehensive article covers:
 
 ## 3D Renders
 
-*Parametric CAD models showing different configurations*
+*Automatically generated from parametric CAD models*
 
-{% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'RP1'" | where_exp: "file", "file.extname == '.png'" %}
+{% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'rp1'" | where_exp: "file", "file.extname == '.png'" %}
 
-{% if render_files.size > 0 %}
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
-{% for file in render_files limit:8 %}
-  <div>
-    <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
-    <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
-      {{ file.basename | replace: "RotiProa_RP1_", "" | replace: "_", " " }}
-    </p>
+{% for config in rp1_configs %}
+  <h3>{{ config | capitalize | replace: "beamreach", "Beam Reach" | replace: "broadreach", "Broad Reach" | replace: "closehaul", "Close Haul" | replace: "closehaulreefed", "Close Haul Reefed" | replace: "goosewing", "Goose Wing" }}</h3>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
+  {% assign config_files = render_files | where_exp: "file", "file.basename contains config" | sort: "basename" %}
+  {% for file in config_files %}
+    <div>
+      <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+      <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
+        {{ file.basename | remove: "rp1." | remove: config | remove: ".render." | remove: "_" | replace: "front", "Back View" | replace: "isometric", "Isometric View" | replace: "right", "Right View" | replace: "top", "Top View" }}
+      </p>
+    </div>
+  {% endfor %}
   </div>
 {% endfor %}
-</div>
-
-<p style="text-align: center; margin-top: 2em;">
-  <a href="{{ '/rp1-gallery.html' | relative_url }}">View All RP1 Configurations →</a>
-</p>
-{% else %}
-  <p><em>Renders being generated...</em></p>
-{% endif %}
 
 ---
 

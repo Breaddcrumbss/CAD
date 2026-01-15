@@ -45,9 +45,9 @@ Dragon boats have been used across Asia for over 2,000 years. The DB22 design re
 
 | Specification | Estimated Value |
 |--------------|----------------|
-| Overall Length (LOA) | ~13m |
+| Overall Length (LOA) | {{ site.data.rp3_closehaul_parameters.vaka_length }} mm |
 | Beam (hull) | ~1.2m (traditional dragon boat proportions) |
-| Beam (with outrigger) | ~7-8m (TBD based on optimization) |
+| Beam (with outrigger) | {{ site.data.rp3_closehaul_parameters.beam }} mm |
 | Capacity | 5-6 passengers + 2 crew |
 | Solar Power | 6-8kW peak (estimated) |
 | Motor Power | 5-6kW electric (estimated) |
@@ -126,31 +126,25 @@ This isn't just about technology transfer; it's about **cultural continuity** - 
 
 ## 3D Renders
 
-*Design visualization coming soon*
+*Automatically generated from parametric CAD models*
 
-{% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'RP3'" | where_exp: "file", "file.extname == '.png'" %}
+{% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'rp3'" | where_exp: "file", "file.extname == '.png'" %}
 
-{% if render_files.size > 0 %}
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
-{% for file in render_files limit:8 %}
-  <div>
-    <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
-    <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
-      {{ file.basename | replace: "RotiProa_RP3_", "" | replace: "_", " " }}
-    </p>
+{% for config in rp3_configs %}
+  <h3>{{ config | capitalize | replace: "beamreach", "Beam Reach" | replace: "broadreach", "Broad Reach" | replace: "closehaul", "Close Haul" | replace: "closehaulreefed", "Close Haul Reefed" | replace: "goosewing", "Goose Wing" }}</h3>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
+  {% assign config_files = render_files | where_exp: "file", "file.basename contains config" | sort: "basename" %}
+  {% for file in config_files %}
+    <div>
+      <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+      <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
+        {{ file.basename | remove: "rp3." | remove: config | remove: ".render." | remove: "_" | replace: "front", "Back View" | replace: "isometric", "Isometric View" | replace: "right", "Right View" | replace: "top", "Top View" }}
+      </p>
+    </div>
+  {% endfor %}
   </div>
 {% endfor %}
-</div>
-
-<p style="text-align: center; margin-top: 2em;">
-  <a href="{{ '/rp3-gallery.html' | relative_url }}">View All RP3 Configurations →</a>
-</p>
-{% else %}
-  <div style="background: #f8f8f8; padding: 3em; text-align: center; border-radius: 8px; margin: 2em 0;">
-    <p style="color: #666; font-size: 1.1em;"><em>Detailed CAD renders will be available as the design progresses through 2026</em></p>
-    <p style="margin-top: 1em;">Currently, we're in the conceptual design phase, refining the dragon boat hull adaptation and optimizing the outrigger configuration for the larger vessel size.</p>
-  </div>
-{% endif %}
 
 ---
 
