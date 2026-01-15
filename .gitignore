@@ -5,3 +5,8 @@ __pycache__
 artifacts/
 *.FCStd
 *.FCStd1
+
+freecad-python
+freecadcmd
+
+squashfs-root
