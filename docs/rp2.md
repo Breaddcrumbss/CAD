@@ -130,26 +130,37 @@ The vessel can be configured for different sailing conditions and use cases:
 
 ## Download CAD Models
 
-Access parametric FreeCAD models for all sail configurations.
+Access CAD models for all sail configurations in FreeCAD (.FCStd) and STEP (.step) formats.
 These files include the complete 3D geometry and can be modified for your specific requirements.
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1em; margin: 2em 0;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1em; margin: 2em 0;">
 {% for config in site.data.rp2_downloads.configurations %}
-  <div style="padding: 1em; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
-    <div style="font-size: 2em; margin-bottom: 0.5em;">📐</div>
-    <a href="{{ '/downloads/' | append: config.filename | relative_url }}" style="font-weight: bold; display: block; margin-bottom: 0.5em;">
+  <div style="padding: 1em; border: 1px solid #ddd; border-radius: 4px;">
+    <div style="font-weight: bold; margin-bottom: 0.5em; text-transform: capitalize;">
       {{ config.name | replace: "_", " " }}
-    </a>
+    </div>
     {% if config.description %}
-    <div style="font-size: 0.85em; color: #666;">
+    <div style="font-size: 0.85em; color: #666; margin-bottom: 0.75em;">
       {{ config.description }}
     </div>
     {% endif %}
+    <div style="display: flex; gap: 0.5em; flex-wrap: wrap;">
+      <a href="{{ '/downloads/' | append: config.filename | relative_url }}" style="background: #28a745; color: white; padding: 0.4em 0.8em; border-radius: 4px; text-decoration: none; font-size: 0.9em;">
+        📐 FreeCAD
+      </a>
+      {% if config.step_filename %}
+      <a href="{{ '/downloads/' | append: config.step_filename | relative_url }}" style="background: #007bff; color: white; padding: 0.4em 0.8em; border-radius: 4px; text-decoration: none; font-size: 0.9em;">
+        📦 STEP
+      </a>
+      {% endif %}
+    </div>
   </div>
 {% endfor %}
 </div>
 
-**Software Required:** [FreeCAD](https://www.freecad.org/) (free and open-source)
+**Formats:**
+- **FreeCAD (.FCStd):** Parametric model for [FreeCAD](https://www.freecad.org/) (free and open-source)
+- **STEP (.step):** Universal CAD format compatible with most CAD software
 
 **License:** Models are shared under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) - free to use, modify, and share with attribution.
 

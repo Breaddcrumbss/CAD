@@ -50,9 +50,15 @@ def generate_downloads_yaml(boat, config_dir, artifacts_dir, output_path):
             config_name = parts[1]
             description = get_configuration_description(config_dir, config_name)
 
+            # Check if STEP file exists
+            step_filename = f'{boat}.{config_name}.step'
+            step_path = os.path.join(artifacts_dir, step_filename)
+            has_step = os.path.exists(step_path)
+
             configs.append({
                 'name': config_name,
                 'filename': f'{boat}.{config_name}.color.FCStd',
+                'step_filename': step_filename if has_step else None,
                 'description': description
             })
 
@@ -69,6 +75,8 @@ def generate_downloads_yaml(boat, config_dir, artifacts_dir, output_path):
     for config in configs:
         yaml_lines.append(f"  - name: {config['name']}")
         yaml_lines.append(f"    filename: {config['filename']}")
+        if config['step_filename']:
+            yaml_lines.append(f"    step_filename: {config['step_filename']}")
         if config['description']:
             yaml_lines.append(f"    description: {config['description']}")
 

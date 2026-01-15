@@ -45,6 +45,15 @@ DESIGN_DIR := $(SRC_DIR)/design
 COLOR_DIR := $(SRC_DIR)/color
 MASS_DIR := $(SRC_DIR)/mass
 RENDER_DIR := $(SRC_DIR)/render
+EXPORT_DIR := $(SRC_DIR)/export
+
+# Source files (for dependency tracking)
+PARAMETERS_SOURCES := $(wildcard $(PARAMETERS_DIR)/*.py)
+DESIGN_SOURCES := $(wildcard $(DESIGN_DIR)/*.py)
+COLOR_SOURCES := $(wildcard $(COLOR_DIR)/*.py)
+MASS_SOURCES := $(wildcard $(MASS_DIR)/*.py)
+RENDER_SOURCES := $(wildcard $(RENDER_DIR)/*.py)
+EXPORT_SOURCES := $(wildcard $(EXPORT_DIR)/*.py) $(wildcard $(EXPORT_DIR)/*.sh)
 
 # ==============================================================================
 # AUTO-DISCOVERY: Find all boats and configurations
@@ -76,6 +85,7 @@ PARAMETERS_ARTIFACT := $(ARTIFACTS_DIR)/$(BOAT).$(CONFIGURATION).parameters.json
 DESIGN_ARTIFACT := $(ARTIFACTS_DIR)/$(BOAT).$(CONFIGURATION).design.FCStd
 COLOR_ARTIFACT := $(ARTIFACTS_DIR)/$(BOAT).$(CONFIGURATION).color.FCStd
 MASS_ARTIFACT := $(ARTIFACTS_DIR)/$(BOAT).$(CONFIGURATION).mass.json
+STEP_ARTIFACT := $(ARTIFACTS_DIR)/$(BOAT).$(CONFIGURATION).step
 JEKYLL_DATA := $(DOCS_DATA_DIR)/$(BOAT).$(CONFIGURATION).json
 
 # ==============================================================================
@@ -83,7 +93,7 @@ JEKYLL_DATA := $(DOCS_DATA_DIR)/$(BOAT).$(CONFIGURATION).json
 # ==============================================================================
 
 .PHONY: all help clean check
-.PHONY: jekyll design-all parameters-all color-all render-all
+.PHONY: jekyll design-all parameters-all color-all render-all step-all
 
 # ==============================================================================
 # MAIN TARGETS
@@ -106,6 +116,8 @@ help:
 	@echo "  make design-all             - Generate all boat+configuration combinations"
 	@echo "  make color                  - Apply color scheme to design (MATERIALS=$(MATERIALS))"
 	@echo "  make color-all              - Apply color scheme to all existing designs"
+	@echo "  make step                   - Export design to STEP format (geometry only)"
+	@echo "  make step-all               - Export all designs to STEP format"
 	@echo "  make render                 - Render images (applies colors then renders)"
 	@echo "  make render-all             - Render all existing colored designs"
 	@echo ""
@@ -131,7 +143,7 @@ help:
 # ==============================================================================
 
 # Compute and save parameters to artifacts directory
-$(PARAMETERS_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETERS_DIR)/parameters.py
+$(PARAMETERS_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETERS_SOURCES)
 	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."
 	@mkdir -p $(ARTIFACTS_DIR)
 	@python3 $(PARAMETERS_DIR)/parameters.py \
@@ -163,7 +175,7 @@ $(ARTIFACTS_DIR) $(DOCS_DATA_DIR):
 	@mkdir -p $@
 
 # Generate a single design
-$(DESIGN_ARTIFACT): $(PARAMETERS_ARTIFACT) $(DESIGN_DIR)/design.py | $(DESIGN_DIR)
+$(DESIGN_ARTIFACT): $(PARAMETERS_ARTIFACT) $(DESIGN_SOURCES) | $(DESIGN_DIR)
 	@echo "Generating design: $(BOAT).$(CONFIGURATION)"
 	@echo "  Parameters: $(PARAMETERS_ARTIFACT)"
 	@$(FREECAD_CMD) $(DESIGN_DIR)/design.py $(PARAMETERS_ARTIFACT) $(DESIGN_ARTIFACT) || true
@@ -193,7 +205,7 @@ design-all:
 	@echo "✓ All designs complete!"
 
 # Apply color scheme to design
-$(COLOR_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIALS_FILE) $(COLOR_DIR)/color.py | $(COLOR_DIR)
+$(COLOR_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIALS_FILE) $(COLOR_SOURCES) | $(COLOR_DIR)
 	@echo "Applying color scheme '$(MATERIALS)' to $(BOAT).$(CONFIGURATION)..."
 	@if [ ! -f "$(MATERIALS_FILE)" ]; then \
 		echo "ERROR: Color scheme not found: $(MATERIALS_FILE)"; \
@@ -236,7 +248,7 @@ color-all:
 	@echo "✓ All designs colored!"
 
 # Mass analysis (depends on design, not colors - mass is geometry-based)
-$(MASS_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIALS_FILE) $(MASS_DIR)/mass.py | $(ARTIFACTS_DIR)
+$(MASS_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIALS_FILE) $(MASS_SOURCES) | $(ARTIFACTS_DIR)
 	@echo "Running mass analysis: $(BOAT).$(CONFIGURATION)"
 	@if [ "$(UNAME)" = "Darwin" ]; then \
 		PYTHONPATH=$(FREECAD_BUNDLE)/Contents/Resources/lib:$(FREECAD_BUNDLE)/Contents/Resources/Mod:$(PWD) \
@@ -269,7 +281,7 @@ mass-all:
 
 # Render images from colored FCStd file
 .PHONY: render
-render: $(COLOR_ARTIFACT) $(RENDER_DIR)
+render: $(COLOR_ARTIFACT) $(RENDER_SOURCES)
 	@echo "Rendering images from $(COLOR_ARTIFACT)..."
 	@if [ "$(UNAME)" = "Darwin" ]; then \
 		$(RENDER_DIR)/render_mac.sh "$(COLOR_ARTIFACT)" "$(ARTIFACTS_DIR)" "$(FREECAD_APP)"; \
@@ -291,7 +303,7 @@ render: $(COLOR_ARTIFACT) $(RENDER_DIR)
 
 # Render images from all existing FCStd files
 .PHONY: render-all
-render-all: $(RENDER_DIR)
+render-all: $(RENDER_SOURCES)
 	@echo "Rendering images from all existing designs..."
 	@for fcstd in $(ARTIFACTS_DIR)/*.FCStd; do \
 		if [ -f "$$fcstd" ]; then \
@@ -303,6 +315,42 @@ render-all: $(RENDER_DIR)
 		fi \
 	done
 	@echo "All renders complete!"
+
+# Export to STEP format (geometry only, no colors)
+$(STEP_ARTIFACT): $(DESIGN_ARTIFACT) $(EXPORT_SOURCES) | $(ARTIFACTS_DIR)
+	@echo "Exporting STEP: $(BOAT).$(CONFIGURATION)"
+	@if [ "$(UNAME)" = "Darwin" ]; then \
+		bash $(EXPORT_DIR)/step_mac.sh \
+			"$(DESIGN_ARTIFACT)" \
+			"$(STEP_ARTIFACT)" \
+			"$(FREECAD_APP)"; \
+	else \
+		$(FREECAD_PYTHON) $(EXPORT_DIR)/step.py \
+			--input "$(DESIGN_ARTIFACT)" \
+			--output "$(STEP_ARTIFACT)"; \
+	fi
+	@echo "✓ STEP export: $(STEP_ARTIFACT)"
+
+# Convenience target: export single design to STEP
+.PHONY: step
+step: $(STEP_ARTIFACT)
+	@echo "✓ STEP export complete for $(BOAT).$(CONFIGURATION)"
+
+# Export all designs to STEP
+.PHONY: step-all
+step-all:
+	@echo "Exporting all designs to STEP..."
+	@for design in $(ARTIFACTS_DIR)/*.design.FCStd; do \
+		if [ -f "$$design" ]; then \
+			base=$$(basename "$$design" .design.FCStd); \
+			boat=$$(echo "$$base" | cut -d'.' -f1); \
+			configuration=$$(echo "$$base" | cut -d'.' -f2); \
+			echo ""; \
+			$(MAKE) step BOAT=$$boat CONFIGURATION=$$configuration || true; \
+		fi \
+	done
+	@echo ""
+	@echo "✓ All STEP exports complete!"
 
 # "Required" target: look in the appropriate configuration file what stages need to run and run them
 .PHONY: required
