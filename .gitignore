@@ -6,4 +6,8 @@ artifact/
 artifacts/
 *.FCStd
 *.FCStd1
-docs/dependency_graph.png
+
+freecad-python
+freecadcmd
+
+squashfs-root
