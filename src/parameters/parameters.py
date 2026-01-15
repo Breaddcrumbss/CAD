@@ -120,9 +120,12 @@ def compute_derived(base: Dict[str, Any]) -> Dict[str, Any]:
     params['mast_step_inner_diameter'] = base['mast_diameter']
     
     # Yard spar height
-    params['yard_spar_height'] = (base['mast_height'] - 
+    params['yard_spar_height'] = (base['mast_height'] -
                                   base['yard_spar_distance_from_top'])
-    
+
+    # Boom length matches yard length (both hold the sail edges)
+    params['boom_length'] = base['yard_length']
+
     # Rudder calculations
     params['rudder_bearing_block_height'] = params['stringer_width']
     params['rudder_vaka_mount_base_level'] = ((params['bottom_height'] + 

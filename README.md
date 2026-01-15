@@ -52,24 +52,35 @@ Change the boat specifications and rerun the macro:
 - Change `constants/configurations/closehaul.json` to play with the sail settings, rudder position etc.
 - Add or change boat features by editing `src/design/central.py`, `src/design/mirror.py`, or `src/design/rotation.py` and rerun the macro.
 
-## Generating `FCStd` files from command line
+## Generating `FCStd` and `step` files from command line
 
 To generate all designs (all boats with all configurations) just type
 ```
 make
 ```
-Or to generate an individual design type
+To generate an individual design, type
 ```
 make design BOAT=rp2 CONFIG=closehaul
+```
+or
+```
+make step BOAT=rp2 CONFIG=closehaul
 ```
 The generated files are placed in the folder `artifacts`, for example:
 ```
 artifacts/rp2.closehaul.design.FCStd
+artifacts/rp2.closehaul.step
 ```
 
 ## Continuous Integration/Continuous Deployment (CICD)
 
-The issue: when we have an idea for an improvement of the design, we would need to redo all changes in all affected artifacts: the designs, renderings, validations, and websites. CICD takes care of that but automatically regenerating the artifacts. This is done locally, using the `make` facility and on the github server using a workflow. The workflow makes sure that the [solarproa.org](https://solarproa.org) always has the latest versions.
+The issue: when we have an idea for an improvement of the design, we
+would need to redo all changes in all affected artifacts: the designs,
+renderings, validations, and websites. CICD takes care of that but
+automatically regenerating the artifacts. This is done locally, using
+the `make` facility and on the github server using a workflow. The
+workflow makes sure that the [solarproa.org](https://solarproa.org)
+website has always the latest versions.
 
 ## Under the hood
 

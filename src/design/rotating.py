@@ -94,11 +94,11 @@ def rig(the_rig, params, sail_angle=0, sail_camber=10000, reefing_percentage=0):
     boom.Shape = pipe(params['boom_diameter'],
                       params['boom_thickness'],
                       params['boom_length'])
-    
+
     # Boom rotates around the SAME pivot point as yard
     # But its unrotated position is effective_sail_height below the pivot
     # So we need to rotate the point (0, boom_length/2, -effective_sail_height) around the pivot
-    
+
     # In unrotated position: boom center is at (0, boom_length/2, -effective_sail_height) relative to pivot
     # After rotation by angle around X axis:
     boom_local_y = params['boom_length'] / 2
