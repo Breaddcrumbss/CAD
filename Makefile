@@ -32,10 +32,12 @@ BOAT_DIR := $(CONST_DIR)/boat
 CONFIGURATION_DIR := $(CONST_DIR)/configuration
 MATERIAL_DIR := $(CONST_DIR)/material
 SRC_DIR := src
+
+# output directories
 ARTIFACT_DIR := artifact
 DOCS_DATA_DIR := docs/_data
 
-# Create those output directories if they don't exist yet
+# create those output directories if they don't exist yet
 $(ARTIFACT_DIR) $(DOCS_DATA_DIR):
 	@mkdir -p $@
 
@@ -121,6 +123,7 @@ help:
 	@echo "Utility Targets:"
 	@echo "  make clean                  - Remove all generated files"
 	@echo "  make check                  - Check FreeCAD installation"
+	@echo "  make graph                  - Generate dependency graph (docs/dependency_graph.png)"
 	@echo "  make help                   - Show this help message"
 	@echo ""
 	@echo "Examples:"
@@ -131,6 +134,7 @@ help:
 	@echo ""
 	@echo "FreeCAD: $(FREECAD)"
 
+# remove all generated files
 .PHONY: clean
 clean:
 	@echo "Cleaning generated files..."
@@ -144,6 +148,7 @@ clean:
 	@find . -name '*.pyo' -delete
 	@echo "✓ Clean complete!"
 
+# check if FreeCAD and Python are properly installed
 .PHONY: check
 check:
 	@echo "Checking for FreeCAD..."
@@ -158,18 +163,23 @@ check:
 	@echo ""
 	@echo "System ready!"
 
-# Serve website locally
+# serve website locally
 .PHONY: localhost
 localhost:
 	@echo "Serving website in localhost..."
 	cd docs; bundle exec jekyll serve
 
-# Make zip file with just the newest versions of the git files
+# make zip file with just the newest versions of the git files
 .PHONY: zip
 zip:	clean
 	@echo "Make zip file with current working directory"
 	@rm -f ../CAD-clean.zip
 	git ls-files | zip -@ ../CAD-clean.zip
+
+# generate dependency graph
+.PHONY: graph
+graph:
+	@python3 docs/generate_dependency_graph.py docs/dependency_graph.png
 
 # ==============================================================================
 # STAGES
@@ -181,7 +191,7 @@ zip:	clean
 
 PARAMETER_DIR := $(SRC_DIR)/parameter
 PARAMETER_SOURCE := $(wildcard $(PARAMETER_DIR)/*.py)
-PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameters.json
+PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameter.json
 
 $(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETER_SOURCE)
 	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."

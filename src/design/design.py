@@ -12,11 +12,6 @@ import json
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-# Parse arguments
-if len(sys.argv) < 4:
-    print("Usage: generate.FCMacro <parameters.json> <output.FCStd>")
-    sys.exit(1)
-
 params_path = sys.argv[3]
 output_path = sys.argv[4]
 

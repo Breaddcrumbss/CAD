@@ -45,9 +45,9 @@ Dragon boats have been used across Asia for over 2,000 years. The DB22 design re
 
 | Specification | Estimated Value |
 |--------------|----------------|
-| Overall Length (LOA) | {{ site.data.rp3_closehaul_parameters.vaka_length }} mm |
+| Overall Length (LOA) | {{ site.data.rp3_closehaul_parameter.vaka_length }} mm |
 | Beam (hull) | ~1.2m (traditional dragon boat proportions) |
-| Beam (with outrigger) | {{ site.data.rp3_closehaul_parameters.beam }} mm |
+| Beam (with outrigger) | {{ site.data.rp3_closehaul_parameter.beam }} mm |
 | Capacity | 5-6 passengers + 2 crew |
 | Solar Power | 6-8kW peak (estimated) |
 | Motor Power | 5-6kW electric (estimated) |

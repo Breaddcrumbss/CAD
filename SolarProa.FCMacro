@@ -56,7 +56,7 @@ print(f"Available configurations: {configurations}")
 
 def load_parameters(boat, configuration):
     """Load computed parameters from artifacts (includes derived values like vaka_x_offset)"""
-    params_file = os.path.join(repo_root, 'artifacts', f'{boat}.{configuration}.parameters.json')
+    params_file = os.path.join(repo_root, 'artifacts', f'{boat}.{configuration}.parameter.json')
 
     if os.path.exists(params_file):
         with open(params_file, 'r') as f:
