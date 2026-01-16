@@ -2,6 +2,8 @@
 __pycache__
 .DS_Store
 *.zip
+artifact/
 artifacts/
 *.FCStd
 *.FCStd1
+docs/dependency_graph.png

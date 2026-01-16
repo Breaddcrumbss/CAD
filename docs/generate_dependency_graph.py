@@ -1,62 +1,111 @@
 #!/usr/bin/env python3
 """
-Generate a dependency graph from the Makefile.
-Parses the Makefile to extract stage dependencies and generates a DOT graph.
+Generate a dependency graph by parsing the Makefile.
+Automatically extracts stages and their dependencies.
 """
 
 import re
 import subprocess
 import sys
+import os
 
-# Define the stages and their dependencies based on Makefile structure
-# Format: (target_pattern, [dependency_patterns], stage_name)
-STAGES = [
-    {
-        'name': 'parameter',
-        'artifact': '{boat}.{config}.parameter.json',
-        'depends_on': ['boat.json', 'configuration.json'],
-        'color': '#a8e6cf'
-    },
-    {
-        'name': 'design',
-        'artifact': '{boat}.{config}.design.FCStd',
-        'depends_on': ['parameter'],
-        'color': '#dcedc1'
-    },
-    {
-        'name': 'color',
-        'artifact': '{boat}.{config}.color.FCStd',
-        'depends_on': ['design', 'material.json'],
-        'color': '#ffd3b6'
-    },
-    {
-        'name': 'mass',
-        'artifact': '{boat}.{config}.mass.json',
-        'depends_on': ['design', 'material.json'],
-        'color': '#ffaaa5'
-    },
-    {
-        'name': 'render',
-        'artifact': '{boat}.{config}.render.png',
-        'depends_on': ['color'],
-        'color': '#ff8b94'
-    },
-    {
-        'name': 'step',
-        'artifact': '{boat}.{config}.step.step',
-        'depends_on': ['design'],
-        'color': '#b5ead7'
-    },
-]
 
-INPUTS = [
-    {'name': 'boat.json', 'label': 'constant/boat/*.json', 'color': '#c7ceea'},
-    {'name': 'configuration.json', 'label': 'constant/configuration/*.json', 'color': '#c7ceea'},
-    {'name': 'material.json', 'label': 'constant/material/*.json', 'color': '#c7ceea'},
-]
+def parse_makefile(makefile_path):
+    """Parse the Makefile to extract stages and dependencies."""
 
-def generate_dot():
+    with open(makefile_path, 'r') as f:
+        content = f.read()
+
+    # First, extract variable definitions
+    variables = {}
+    for match in re.finditer(r'^([A-Z_]+)\s*:=\s*(.+)$', content, re.MULTILINE):
+        var_name = match.group(1)
+        var_value = match.group(2).strip()
+        variables[var_name] = var_value
+
+    # Find all *_ARTIFACT definitions to identify stages
+    stages = {}
+    artifact_pattern = re.compile(r'^([A-Z]+)_ARTIFACT\s*:=\s*(.+)$', re.MULTILINE)
+
+    for match in artifact_pattern.finditer(content):
+        stage_name = match.group(1).lower()
+        artifact_pattern_str = match.group(2).strip()
+        stages[stage_name] = {
+            'name': stage_name,
+            'artifact': artifact_pattern_str,
+            'depends_on': []
+        }
+
+    # Find dependency rules for each artifact
+    # Pattern: $(STAGE_ARTIFACT): dep1 dep2 dep3
+    rule_pattern = re.compile(
+        r'^\$\(([A-Z]+)_ARTIFACT\)\s*:\s*(.+?)(?:\s*\||\s*$)',
+        re.MULTILINE
+    )
+
+    for match in rule_pattern.finditer(content):
+        stage_name = match.group(1).lower()
+        deps_str = match.group(2).strip()
+
+        if stage_name not in stages:
+            continue
+
+        # Parse dependencies
+        deps = []
+        for dep in deps_str.split():
+            dep = dep.strip()
+            if not dep:
+                continue
+
+            # Check if it's another stage artifact
+            artifact_match = re.match(r'\$\(([A-Z]+)_ARTIFACT\)', dep)
+            if artifact_match:
+                dep_stage = artifact_match.group(1).lower()
+                deps.append(dep_stage)
+            # Check if it's a file reference
+            elif re.match(r'\$\(([A-Z]+)_FILE\)', dep):
+                file_match = re.match(r'\$\(([A-Z]+)_FILE\)', dep)
+                file_type = file_match.group(1).lower()
+                deps.append(f'{file_type}.json')
+            # Check if it's a source reference (skip these for the graph)
+            elif '_SOURCE' in dep:
+                continue
+
+        stages[stage_name]['depends_on'] = deps
+
+    # Find input file definitions (BOAT_FILE, CONFIGURATION_FILE, etc)
+    inputs = {}
+    file_pattern = re.compile(r'^([A-Z]+)_FILE\s*:=\s*\$\(([A-Z_]+)\)/\$\(([A-Z]+)\)\.json', re.MULTILINE)
+    for match in file_pattern.finditer(content):
+        file_type = match.group(1).lower()
+        dir_var = match.group(2)
+        # Get the directory path
+        if dir_var in variables:
+            dir_path = variables[dir_var]
+            # Expand nested variables
+            for var, val in variables.items():
+                dir_path = dir_path.replace(f'$({var})', val)
+            inputs[f'{file_type}.json'] = f'{dir_path}/*.json'
+
+    # Special case: render is a phony target without *_ARTIFACT
+    # It depends on color and produces multiple PNGs
+    if 'render' not in stages:
+        stages['render'] = {
+            'name': 'render',
+            'artifact': '{boat}.{config}.render.*.png',
+            'depends_on': ['color']
+        }
+
+    return stages, inputs
+
+
+def generate_dot(stages, inputs):
     """Generate DOT graph representation."""
+
+    # Color palette
+    colors = ['#a8e6cf', '#dcedc1', '#ffd3b6', '#ffaaa5', '#ff8b94', '#b5ead7', '#c7ceea', '#e2f0cb']
+    input_color = '#c7ceea'
+
     lines = [
         'digraph MakefileDependencies {',
         '    rankdir=LR;',
@@ -71,8 +120,9 @@ def generate_dot():
     ]
 
     # Add input nodes
-    for inp in INPUTS:
-        lines.append(f'        {inp["name"].replace(".", "_")} [label="{inp["label"]}", fillcolor="{inp["color"]}"];')
+    for inp_name, inp_path in sorted(inputs.items()):
+        node_id = inp_name.replace('.', '_')
+        lines.append(f'        {node_id} [label="{inp_path}", fillcolor="{input_color}"];')
 
     lines.extend([
         '    }',
@@ -85,9 +135,16 @@ def generate_dot():
     ])
 
     # Add stage nodes
-    for stage in STAGES:
-        label = f"{stage['name']}\\n{stage['artifact']}"
-        lines.append(f'        {stage["name"]} [label="{label}", fillcolor="{stage["color"]}"];')
+    for i, (stage_name, stage_info) in enumerate(sorted(stages.items())):
+        color = colors[i % len(colors)]
+        # Simplify artifact pattern for display
+        artifact = stage_info['artifact']
+        # Replace variable references with placeholders
+        artifact = re.sub(r'\$\([A-Z_]+\)/', '', artifact)
+        artifact = artifact.replace('$(BOAT)', '{boat}')
+        artifact = artifact.replace('$(CONFIGURATION)', '{config}')
+        label = f"{stage_name}\\n{artifact}"
+        lines.append(f'        {stage_name} [label="{label}", fillcolor="{color}"];')
 
     lines.extend([
         '    }',
@@ -96,37 +153,45 @@ def generate_dot():
     ])
 
     # Add edges
-    for stage in STAGES:
-        for dep in stage['depends_on']:
+    for stage_name, stage_info in stages.items():
+        for dep in stage_info['depends_on']:
             dep_node = dep.replace('.', '_')
-            lines.append(f'    {dep_node} -> {stage["name"]};')
+            lines.append(f'    {dep_node} -> {stage_name};')
 
-    lines.extend([
-        '',
-        '    // Legend',
-        '    subgraph cluster_legend {',
-        '        label="Legend";',
-        '        style=solid;',
-        '        color=black;',
-        '        legend_input [label="Input (JSON)", fillcolor="#c7ceea"];',
-        '        legend_stage [label="Stage", fillcolor="#a8e6cf"];',
-        '        legend_input -> legend_stage [style=invis];',
-        '    }',
-        '}',
-    ])
+    lines.append('}')
 
     return '\n'.join(lines)
 
 
 def main():
-    dot_content = generate_dot()
+    # Find Makefile
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.join(script_dir, '..')
+    makefile_path = os.path.join(repo_root, 'Makefile')
+
+    if not os.path.exists(makefile_path):
+        print(f"Error: Makefile not found at {makefile_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse Makefile
+    stages, inputs = parse_makefile(makefile_path)
+
+    if not stages:
+        print("Error: No stages found in Makefile", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Found {len(stages)} stages: {', '.join(sorted(stages.keys()))}")
+    print(f"Found {len(inputs)} inputs: {', '.join(sorted(inputs.keys()))}")
+
+    # Generate DOT
+    dot_content = generate_dot(stages, inputs)
 
     if len(sys.argv) > 1 and sys.argv[1] == '--dot':
         # Output DOT format only
         print(dot_content)
     else:
         # Try to generate PNG
-        output_file = sys.argv[1] if len(sys.argv) > 1 else 'docs/dependency_graph.png'
+        output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(repo_root, 'docs', 'dependency_graph.png')
 
         try:
             result = subprocess.run(

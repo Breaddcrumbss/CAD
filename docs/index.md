@@ -97,7 +97,7 @@ All vessel designs are created using **parametric CAD modeling in FreeCAD and Py
 - Rapid design iteration and optimization, version control and design transparency
 - Open-source accessibility for educational purposes
 
-**[Explore the CAD Models →]({{ '/downloads' | relative_url }})**
+**[Explore the CAD Models →]({{ '/downloads' | relative_url }})** | **[Under the Hood →]({{ '/technical.html' | relative_url }})**
 
 ---
 
@@ -142,5 +142,5 @@ Partnership structures can be flexibly tailored to organizational priorities.
 
 <div style="text-align: center; padding: 2em 0; color: #666; font-size: 0.9em;">
   <p><em>Combining Southeast Asian maritime traditions with modern sustainable technology</em></p>
-  <p>This site and all CAD models are automatically built and deployed via GitHub Actions</p>
+  <p>This site and all CAD models are automatically built and deployed via GitHub Actions | <a href="{{ '/technical.html' | relative_url }}">See how it works</a></p>
 </div>

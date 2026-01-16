@@ -1,6 +1,7 @@
 {
-  "configuration_description": "Broad reach sailing configuration",
   "configuration_name": "broadreach",
+  "display_name": "Broad Reach",
+  "configuration_description": "Downwind sailing",
   
   "required": [
     "render",

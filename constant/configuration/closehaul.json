@@ -1,6 +1,7 @@
 {
-  "configuration_description": "Close haul sailing configuration",
   "configuration_name": "closehaul",
+  "display_name": "Close Haul",
+  "configuration_description": "Upwind sailing",
   
   "required": [
     "render",

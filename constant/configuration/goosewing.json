@@ -1,6 +1,7 @@
 {
-  "configuration_description": "Goose-wing sailing configuration",
   "configuration_name": "goosewing",
+  "display_name": "Goose Wing",
+  "configuration_description": "Running downwind",
   
   "required": [
     "render",

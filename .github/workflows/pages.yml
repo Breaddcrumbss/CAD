@@ -39,9 +39,9 @@ jobs:
       
       - name: Setup FreeCAD environment
         run: |
-          # Install xvfb for headless rendering and ImageMagick for cropping
+          # Install xvfb for headless rendering, ImageMagick for cropping, and graphviz for dependency graph
           sudo apt-get update
-          sudo apt-get install -y xvfb imagemagick
+          sudo apt-get install -y xvfb imagemagick graphviz
           
           # Create wrapper for running FreeCAD in console mode (for builds)
           cat > freecadcmd << 'WRAPPER_EOF'
@@ -71,7 +71,15 @@ jobs:
       - name: Generate downloads YAML files
         run: |
           python3 docs/generate_downloads_yaml.py
-      
+
+      - name: Generate configurations YAML file
+        run: |
+          python3 docs/generate_configurations_yaml.py
+
+      - name: Generate dependency graph
+        run: |
+          python3 docs/generate_dependency_graph.py
+
       - name: Copy data files to docs folder
         run: |
           mkdir -p docs/_data

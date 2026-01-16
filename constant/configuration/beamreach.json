@@ -1,6 +1,7 @@
 {
-  "configuration_description": "Beam reach sailing configuration",
   "configuration_name": "beamreach",
+  "display_name": "Beam Reach",
+  "configuration_description": "Cross-wind sailing",
   
   "required": [
     "render",

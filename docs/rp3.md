@@ -130,18 +130,16 @@ This isn't just about technology transfer; it's about **cultural continuity** - 
 
 {% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'rp3'" | where_exp: "file", "file.extname == '.png'" %}
 
-{% assign rp3_configs = "beaching,beamreach,broadreach,closehaul,closehaulreefed,goosewing" | split: "," %}
+{% for config in site.data.configurations %}
+  <h3>{{ config.display_name }}</h3>
 
-{% for config in rp3_configs %}
-  <h3>{{ config | capitalize | replace: "beamreach", "Beam Reach" | replace: "broadreach", "Broad Reach" | replace: "closehaul", "Close Haul" | replace: "closehaulreefed", "Close Haul Reefed" | replace: "goosewing", "Goose Wing" }}</h3>
-  
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
-  {% assign config_files = render_files | where_exp: "file", "file.basename contains config" | sort: "basename" %}
+  {% assign config_files = render_files | where_exp: "file", "file.basename contains config.name" | sort: "basename" %}
   {% for file in config_files %}
     <div>
       <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
       <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
-        {{ file.basename | remove: "rp3." | remove: config | remove: ".render." | remove: "_" | replace: "front", "Back View" | replace: "isometric", "Isometric View" | replace: "right", "Right View" | replace: "top", "Top View" }}
+        {{ file.basename | remove: "rp3." | remove: config.name | remove: ".render." | remove: "_" | replace: "front", "Back View" | replace: "isometric", "Isometric View" | replace: "right", "Right View" | replace: "top", "Top View" }}
       </p>
     </div>
   {% endfor %}
