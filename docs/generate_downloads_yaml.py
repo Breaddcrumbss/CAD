@@ -9,7 +9,7 @@ import json
 import glob
 
 def discover_boats(boats_dir):
-    """Auto-discover boats from constants/boats/*.json"""
+    """Auto-discover boats from constant/boat/*.json"""
     boats = []
     for boat_file in glob.glob(os.path.join(boats_dir, '*.json')):
         if not os.path.basename(boat_file).startswith('_'):
@@ -69,7 +69,7 @@ def generate_downloads_yaml(boat, config_dir, artifacts_dir, output_path):
     yaml_lines = [
         f"# Auto-generated download links for {boat}",
         f"boat: {boat}",
-        "configurations:"
+        "configuration:"
     ]
 
     for config in configs:
@@ -91,9 +91,9 @@ if __name__ == "__main__":
     # Determine paths relative to repository root
     script_dir = os.path.dirname(os.path.abspath(__file__))
     repo_root = os.path.join(script_dir, '..')
-    boats_dir = os.path.join(repo_root, 'constants', 'boats')
-    config_dir = os.path.join(repo_root, 'constants', 'configurations')
-    artifacts_dir = os.path.join(repo_root, 'artifacts')
+    boats_dir = os.path.join(repo_root, 'constant', 'boat')
+    config_dir = os.path.join(repo_root, 'constant', 'configuration')
+    artifacts_dir = os.path.join(repo_root, 'artifact')
 
     # Check if directories exist
     if not os.path.exists(boats_dir):
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # Auto-discover boats
     boats = discover_boats(boats_dir)
     if not boats:
-        print("ERROR: No boats found in constants/boats/")
+        print("ERROR: No boats found in constant/boat/")
         sys.exit(1)
 
     print(f"Discovered boats: {', '.join(boats)}")

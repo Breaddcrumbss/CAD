@@ -24,7 +24,7 @@ else
 endif
 
 # ==============================================================================
-# DIRECTORY STRUCTURE
+# OVERALL DIRECTORY STRUCTURE
 # ==============================================================================
 
 CONST_DIR := constant
@@ -35,21 +35,9 @@ SRC_DIR := src
 ARTIFACT_DIR := artifact
 DOCS_DATA_DIR := docs/_data
 
-# Source directories
-PARAMETER_DIR := $(SRC_DIR)/parameter
-DESIGN_DIR := $(SRC_DIR)/design
-COLOR_DIR := $(SRC_DIR)/color
-MASS_DIR := $(SRC_DIR)/mass
-RENDER_DIR := $(SRC_DIR)/render
-STEP_DIR := $(SRC_DIR)/step
-
-# Source files (for dependency tracking)
-PARAMETER_SOURCES := $(wildcard $(PARAMETER_DIR)/*.py)
-DESIGN_SOURCES := $(wildcard $(DESIGN_DIR)/*.py)
-COLOR_SOURCES := $(wildcard $(COLOR_DIR)/*.py)
-MASS_SOURCES := $(wildcard $(MASS_DIR)/*.py)
-RENDER_SOURCES := $(wildcard $(RENDER_DIR)/*.py)
-STEP_SOURCES := $(wildcard $(STEP_DIR)/*.py) $(wildcard $(STEP_DIR)/*.sh)
+# Create those output directories if they don't exist yet
+$(ARTIFACT_DIR) $(DOCS_DATA_DIR):
+	@mkdir -p $@
 
 # ==============================================================================
 # AUTO-DISCOVERY: Find all boats and configurations
@@ -67,36 +55,50 @@ CONFIGURATIONS := $(filter-out %~,$(CONFIGURATIONS))
 # ==============================================================================
 
 # Default boat and configuration
-# (can be overridden: make design BOAT=rp2 CONFIGURATION=closehaul)
+# (can be overridden, e.g.:
+#  make design BOAT=rp3 CONFIGURATION=broadreach MATERIAL=wiring)
 BOAT ?= rp2
 CONFIGURATION ?= closehaul
 MATERIAL ?= proa
 
-# Computed file paths using dot-separated naming convention
+# Computed file paths
 BOAT_FILE := $(BOAT_DIR)/$(BOAT).json
 CONFIGURATION_FILE := $(CONFIGURATION_DIR)/$(CONFIGURATION).json
 MATERIAL_FILE := $(MATERIAL_DIR)/$(MATERIAL).json
-
-# Artifact paths
-PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameters.json
-DESIGN_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).design.FCStd
-COLOR_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).color.FCStd
-MASS_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).mass.json
-STEP_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).step.step
-JEKYLL_DATA := $(DOCS_DATA_DIR)/$(BOAT).$(CONFIGURATION).json
-
-# ==============================================================================
-# PHONY TARGETS
-# ==============================================================================
-
-.PHONY: all help clean check jekyll 
 
 # ==============================================================================
 # MAIN TARGETS
 # ==============================================================================
 
+.PHONY: all
 all: required-all
 
+# "required" target: look in the appropriate configuration file what stages
+# need to run and run them
+.PHONY: required
+required:
+	@echo "Running required stages for $(BOAT).$(CONFIGURATION)..."
+	@required_stages=$$(python3 -c "import json; config = json.load(open('$(CONFIGURATION_FILE)')); print(' '.join(config.get('required', [])))"); \
+	for stage in $$required_stages; do \
+		echo "Running stage: $$stage"; \
+		$(MAKE) $$stage BOAT=$(BOAT) CONFIGURATION=$(CONFIGURATION) MATERIAL=$(MATERIAL) || true; \
+	done; \
+	echo "✓ Required stages complete for $(BOAT).$(CONFIGURATION)"
+
+# Apply "required" stages to all designs
+.PHONY: required-all
+required-all:
+	@echo "run required stages..."
+	@for boat in $(BOATS); do \
+		for configuration in $(CONFIGURATIONS); do \
+			echo ""; \
+			$(MAKE) required BOAT=$$boat CONFIGURATION=$$configuration || true; \
+		done \
+	done
+	@echo ""
+	@echo "✓ All required stages complete!"
+
+.PHONY: help
 help:
 	@echo "Solar Proa Makefile-Based Staged Framework"
 	@echo ""
@@ -129,161 +131,7 @@ help:
 	@echo ""
 	@echo "FreeCAD: $(FREECAD)"
 
-# ==============================================================================
-# PARAMETER COMPUTATION
-# ==============================================================================
-
-# Compute and save parameters to artifacts directory
-$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETER_SOURCES)
-	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."
-	@mkdir -p $(ARTIFACT_DIR)
-	@python3 $(PARAMETER_DIR)/parameter.py \
-		--boat $(BOAT_FILE) \
-		--configuration $(CONFIGURATION_FILE) \
-		--output $@
-	@echo "✓ Computed parameters saved to $@"
-
-parameter: $(PARAMETER_ARTIFACT)
-
-# ==============================================================================
-# DESIGN GENERATION
-# ==============================================================================
-
-# Create output directories
-$(ARTIFACT_DIR) $(DOCS_DATA_DIR):
-	@mkdir -p $@
-
-# Generate a single design
-$(DESIGN_ARTIFACT): $(PARAMETER_ARTIFACT) $(DESIGN_SOURCES) | $(DESIGN_DIR)
-	@echo "Generating design: $(BOAT).$(CONFIGURATION)"
-	@echo "  Parameters: $(PARAMETER_ARTIFACT)"
-	@$(FREECAD_CMD) $(DESIGN_DIR)/design.py $(PARAMETER_ARTIFACT) $(DESIGN_ARTIFACT) || true
-	@if [ -f "$(DESIGN_ARTIFACT)" ]; then \
-		echo "✓ Design complete: $(DESIGN_ARTIFACT)"; \
-		if [ "$(UNAME)" = "Darwin" ]; then \
-			echo "Fixing visibility on macOS..."; \
-			bash $(DESIGN_DIR)/fix_visibility.sh "$(DESIGN_ARTIFACT)" "$(FREECAD_APP)"; \
-		fi; \
-	else \
-		echo "ERROR: Design failed - no design file created"; \
-		exit 1; \
-	fi
-
-design: $(DESIGN_ARTIFACT)
-
-# Apply color scheme to design
-$(COLOR_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIAL_FILE) $(COLOR_SOURCES) | $(COLOR_DIR)
-	@echo "Applying color scheme '$(MATERIAL)' to $(BOAT).$(CONFIGURATION)..."
-	@if [ ! -f "$(MATERIAL_FILE)" ]; then \
-		echo "ERROR: Color scheme not found: $(MATERIAL_FILE)"; \
-		echo "Available schemes: $(notdir $(wildcard $(MATERIAL_DIR)/*.json))"; \
-		exit 1; \
-	fi
-	@if [ "$(UNAME)" = "Darwin" ]; then \
-		bash $(COLOR_DIR)/color_mac.sh \
-			"$(DESIGN_ARTIFACT)" \
-			"$(MATERIAL_FILE)" \
-			"$(COLOR_ARTIFACT)" \
-			"$(FREECAD_APP)"; \
-	else \
-		freecad-python $(COLOR_DIR)/color.py \
-			--design "$(DESIGN_ARTIFACT)" \
-			--color "$(MATERIAL_FILE)" \
-			--outputdesign "$(COLOR_ARTIFACT)"; \
-	fi
-	@echo "✓ Colored design: $(COLOR_ARTIFACT)"
-
-# Convenience target: apply colors to a single design
-.PHONY: color
-color: $(COLOR_ARTIFACT)
-	@echo "✓ Color scheme '$(MATERIAL)' applied to $(BOAT).$(CONFIGURATION)"
-
-# Mass analysis (depends on design, not colors - mass is geometry-based)
-$(MASS_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIAL_FILE) $(MASS_SOURCES) | $(ARTIFACT_DIR)
-	@echo "Running mass analysis: $(BOAT).$(CONFIGURATION)"
-	@if [ "$(UNAME)" = "Darwin" ]; then \
-		PYTHONPATH=$(FREECAD_BUNDLE)/Contents/Resources/lib:$(FREECAD_BUNDLE)/Contents/Resources/Mod:$(PWD) \
-		DYLD_LIBRARY_PATH=$(FREECAD_BUNDLE)/Contents/Frameworks:$(FREECAD_BUNDLE)/Contents/Resources/lib \
-		$(FREECAD_PYTHON) $(MASS_DIR)/mass.py --design $(DESIGN_ARTIFACT) --materials $(MATERIAL_FILE) --output $@; \
-	else \
-		PYTHONPATH=$(PWD):$(PWD)/src/design $(FREECAD_PYTHON) $(MASS_DIR)/mass.py --design $(DESIGN_ARTIFACT) --materials $(MATERIAL_FILE) --output $@; \
-	fi
-
-# Convenience target: apply mass to a single design
-.PHONY: mass
-mass: $(MASS_ARTIFACT)
-	@echo "✓ mass calculation applied to $(BOAT).$(CONFIGURATION)"
-
-# Render images from colored FCStd file
-.PHONY: render
-render: $(COLOR_ARTIFACT) $(RENDER_SOURCES)
-	@echo "Rendering images from $(COLOR_ARTIFACT)..."
-	@if [ "$(UNAME)" = "Darwin" ]; then \
-		$(RENDER_DIR)/render_mac.sh "$(COLOR_ARTIFACT)" "$(ARTIFACT_DIR)" "$(FREECAD_APP)"; \
-	else \
-		FCSTD_FILE="$(COLOR_ARTIFACT)" IMAGE_DIR="$(ARTIFACT_DIR)" freecad-python $(RENDER_DIR)/render_linux.py; \
-	fi
-	@echo "Cropping images with ImageMagick..."
-	@if command -v convert >/dev/null 2>&1; then \
-		for img in $(ARTIFACT_DIR)/*.png; do \
-			if [ -f "$$img" ]; then \
-				convert "$$img" -fuzz 1% -trim +repage -bordercolor \#C6D2FF -border 25 "$$img" || true; \
-			fi \
-		done; \
-		echo "Cropping complete!"; \
-	else \
-		echo "ImageMagick not found, skipping crop"; \
-	fi
-	@echo "Render complete!"
-
-# Export to STEP format (geometry only, no colors)
-$(STEP_ARTIFACT): $(DESIGN_ARTIFACT) $(STEP_SOURCES) | $(ARTIFACT_DIR)
-	@echo "Exporting STEP: $(BOAT).$(CONFIGURATION)"
-	@if [ "$(UNAME)" = "Darwin" ]; then \
-		bash $(STEP_DIR)/step_mac.sh \
-			"$(DESIGN_ARTIFACT)" \
-			"$(STEP_ARTIFACT)" \
-			"$(FREECAD_APP)"; \
-	else \
-		$(FREECAD_PYTHON) $(STEP_DIR)/step.py \
-			--input "$(DESIGN_ARTIFACT)" \
-			--output "$(STEP_ARTIFACT)"; \
-	fi
-	@echo "✓ STEP export: $(STEP_ARTIFACT)"
-
-# Convenience target: export single design to STEP
-.PHONY: step
-step: $(STEP_ARTIFACT)
-	@echo "✓ STEP export complete for $(BOAT).$(CONFIGURATION)"
-
-# "Required" target: look in the appropriate configuration file what stages need to run and run them
-.PHONY: required
-required:
-	@echo "Running required stages for $(BOAT).$(CONFIGURATION)..."
-	@required_stages=$$(python3 -c "import json; config = json.load(open('$(CONFIGURATION_FILE)')); print(' '.join(config.get('required', [])))"); \
-	for stage in $$required_stages; do \
-		echo "Running stage: $$stage"; \
-		$(MAKE) $$stage BOAT=$(BOAT) CONFIGURATION=$(CONFIGURATION) MATERIAL=$(MATERIAL) || true; \
-	done; \
-	echo "✓ Required stages complete for $(BOAT).$(CONFIGURATION)"
-
-# Apply "required" stages to all designs
-.PHONY: required-all
-required-all:
-	@echo "run required stages..."
-	@for boat in $(BOATS); do \
-		for configuration in $(CONFIGURATIONS); do \
-			echo ""; \
-			$(MAKE) required BOAT=$$boat CONFIGURATION=$$configuration || true; \
-		done \
-	done
-	@echo ""
-	@echo "✓ All required stages complete!"
-
-# ==============================================================================
-# MISCELLANEOUS
-# ==============================================================================
-
+.PHONY: clean
 clean:
 	@echo "Cleaning generated files..."
 	@rm -rf $(ARTIFACT_DIR)
@@ -296,6 +144,7 @@ clean:
 	@find . -name '*.pyo' -delete
 	@echo "✓ Clean complete!"
 
+.PHONY: check
 check:
 	@echo "Checking for FreeCAD..."
 	@$(FREECAD) --version || (echo "FreeCAD not found!" && exit 1)
@@ -321,3 +170,162 @@ zip:	clean
 	@echo "Make zip file with current working directory"
 	@rm -f ../CAD-clean.zip
 	git ls-files | zip -@ ../CAD-clean.zip
+
+# ==============================================================================
+# STAGES
+# ==============================================================================
+
+# ==============================================================================
+# PARAMETER COMPUTATION
+# ==============================================================================
+
+PARAMETER_DIR := $(SRC_DIR)/parameter
+PARAMETER_SOURCE := $(wildcard $(PARAMETER_DIR)/*.py)
+PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameters.json
+
+$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETER_SOURCE)
+	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."
+	@mkdir -p $(ARTIFACT_DIR)
+	@python3 $(PARAMETER_DIR)/parameter.py \
+		--boat $(BOAT_FILE) \
+		--configuration $(CONFIGURATION_FILE) \
+		--output $@
+	@echo "✓ Computed parameters saved to $@"
+
+.PHONY: parameter
+parameter: $(PARAMETER_ARTIFACT)
+
+# ==============================================================================
+# DESIGN GENERATION
+# ==============================================================================
+
+DESIGN_DIR := $(SRC_DIR)/design
+DESIGN_SOURCE := $(wildcard $(DESIGN_DIR)/*.py)
+DESIGN_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).design.FCStd
+
+$(DESIGN_ARTIFACT): $(PARAMETER_ARTIFACT) $(DESIGN_SOURCE) | $(DESIGN_DIR)
+	@echo "Generating design: $(BOAT).$(CONFIGURATION)"
+	@echo "  Parameters: $(PARAMETER_ARTIFACT)"
+	@$(FREECAD_CMD) $(DESIGN_DIR)/design.py $(PARAMETER_ARTIFACT) $(DESIGN_ARTIFACT) || true
+	@if [ -f "$(DESIGN_ARTIFACT)" ]; then \
+		echo "✓ Design complete: $(DESIGN_ARTIFACT)"; \
+		if [ "$(UNAME)" = "Darwin" ]; then \
+			echo "Fixing visibility on macOS..."; \
+			bash $(DESIGN_DIR)/fix_visibility.sh "$(DESIGN_ARTIFACT)" "$(FREECAD_APP)"; \
+		fi; \
+	else \
+		echo "ERROR: Design failed - no design file created"; \
+		exit 1; \
+	fi
+
+.PHONY: design
+design: $(DESIGN_ARTIFACT)
+
+# ==============================================================================
+# COLOR THE DESIGNS
+# ==============================================================================
+
+COLOR_DIR := $(SRC_DIR)/color
+COLOR_SOURCE := $(wildcard $(COLOR_DIR)/*.py)
+COLOR_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).color.FCStd
+
+$(COLOR_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIAL_FILE) $(COLOR_SOURCE) | $(COLOR_DIR)
+	@echo "Applying color scheme '$(MATERIAL)' to $(BOAT).$(CONFIGURATION)..."
+	@if [ ! -f "$(MATERIAL_FILE)" ]; then \
+		echo "ERROR: Color scheme not found: $(MATERIAL_FILE)"; \
+		echo "Available schemes: $(notdir $(wildcard $(MATERIAL_DIR)/*.json))"; \
+		exit 1; \
+	fi
+	@if [ "$(UNAME)" = "Darwin" ]; then \
+		bash $(COLOR_DIR)/color_mac.sh \
+			"$(DESIGN_ARTIFACT)" \
+			"$(MATERIAL_FILE)" \
+			"$(COLOR_ARTIFACT)" \
+			"$(FREECAD_APP)"; \
+	else \
+		freecad-python $(COLOR_DIR)/color.py \
+			--design "$(DESIGN_ARTIFACT)" \
+			--color "$(MATERIAL_FILE)" \
+			--outputdesign "$(COLOR_ARTIFACT)"; \
+	fi
+	@echo "✓ Colored design: $(COLOR_ARTIFACT)"
+
+.PHONY: color
+color: $(COLOR_ARTIFACT)
+	@echo "✓ Color scheme '$(MATERIAL)' applied to $(BOAT).$(CONFIGURATION)"
+
+# ==============================================================================
+# FIND THE MASS OF THE PARTS AND COMPUTE THE TOTAL MASS
+# ==============================================================================
+
+MASS_DIR := $(SRC_DIR)/mass
+MASS_SOURCE := $(wildcard $(MASS_DIR)/*.py)
+MASS_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).mass.json
+
+$(MASS_ARTIFACT): $(DESIGN_ARTIFACT) $(MATERIAL_FILE) $(MASS_SOURCE) | $(ARTIFACT_DIR)
+	@echo "Running mass analysis: $(BOAT).$(CONFIGURATION)"
+	@if [ "$(UNAME)" = "Darwin" ]; then \
+		PYTHONPATH=$(FREECAD_BUNDLE)/Contents/Resources/lib:$(FREECAD_BUNDLE)/Contents/Resources/Mod:$(PWD) \
+		DYLD_LIBRARY_PATH=$(FREECAD_BUNDLE)/Contents/Frameworks:$(FREECAD_BUNDLE)/Contents/Resources/lib \
+		$(FREECAD_PYTHON) $(MASS_DIR)/mass.py --design $(DESIGN_ARTIFACT) --materials $(MATERIAL_FILE) --output $@; \
+	else \
+		PYTHONPATH=$(PWD):$(PWD)/src/design $(FREECAD_PYTHON) $(MASS_DIR)/mass.py --design $(DESIGN_ARTIFACT) --materials $(MATERIAL_FILE) --output $@; \
+	fi
+
+.PHONY: mass
+mass: $(MASS_ARTIFACT)
+	@echo "✓ mass calculation applied to $(BOAT).$(CONFIGURATION)"
+
+# ==============================================================================
+# RENDER THE COLORED DESIGNS
+# ==============================================================================
+
+RENDER_DIR := $(SRC_DIR)/render
+RENDER_SOURCE := $(wildcard $(RENDER_DIR)/*.py)
+
+.PHONY: render
+render: $(COLOR_ARTIFACT) $(RENDER_SOURCE)
+	@echo "Rendering images from $(COLOR_ARTIFACT)..."
+	@if [ "$(UNAME)" = "Darwin" ]; then \
+		$(RENDER_DIR)/render_mac.sh "$(COLOR_ARTIFACT)" "$(ARTIFACT_DIR)" "$(FREECAD_APP)"; \
+	else \
+		FCSTD_FILE="$(COLOR_ARTIFACT)" IMAGE_DIR="$(ARTIFACT_DIR)" freecad-python $(RENDER_DIR)/render_linux.py; \
+	fi
+	@echo "Cropping images with ImageMagick..."
+	@if command -v convert >/dev/null 2>&1; then \
+		for img in $(ARTIFACT_DIR)/*.png; do \
+			if [ -f "$$img" ]; then \
+				convert "$$img" -fuzz 1% -trim +repage -bordercolor \#C6D2FF -border 25 "$$img" || true; \
+			fi \
+		done; \
+		echo "Cropping complete!"; \
+	else \
+		echo "ImageMagick not found, skipping crop"; \
+	fi
+	@echo "Render complete!"
+
+# ==============================================================================
+# EXPORT DESIGNS TO STEP FORMAT
+# ==============================================================================
+
+STEP_DIR := $(SRC_DIR)/step
+STEP_SOURCE := $(wildcard $(STEP_DIR)/*.py) $(wildcard $(STEP_DIR)/*.sh)
+STEP_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).step.step
+
+$(STEP_ARTIFACT): $(DESIGN_ARTIFACT) $(STEP_SOURCE) | $(ARTIFACT_DIR)
+	@echo "Exporting STEP: $(BOAT).$(CONFIGURATION)"
+	@if [ "$(UNAME)" = "Darwin" ]; then \
+		bash $(STEP_DIR)/step_mac.sh \
+			"$(DESIGN_ARTIFACT)" \
+			"$(STEP_ARTIFACT)" \
+			"$(FREECAD_APP)"; \
+	else \
+		$(FREECAD_PYTHON) $(STEP_DIR)/step.py \
+			--input "$(DESIGN_ARTIFACT)" \
+			--output "$(STEP_ARTIFACT)"; \
+	fi
+	@echo "✓ STEP export: $(STEP_ARTIFACT)"
+
+.PHONY: step
+step: $(STEP_ARTIFACT)
+	@echo "✓ STEP export complete for $(BOAT).$(CONFIGURATION)"
