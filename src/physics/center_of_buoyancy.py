@@ -413,6 +413,16 @@ def compute_center_of_buoyancy(fcstd_path: str, z_displacement: float = 0.0,
     else:
         rotation_center = Base.Vector(0, 0, 0)
 
+    # Compute total volumes per hull type (before transformation)
+    total_ama_volume_mm3 = 0.0
+    total_vaka_volume_mm3 = 0.0
+    for hs in hull_shapes:
+        vol = hs["shape"].Volume
+        if hs["pattern"].startswith("ama"):
+            total_ama_volume_mm3 += vol
+        else:
+            total_vaka_volume_mm3 += vol
+
     # Transform each hull shape and compute submerged volume
     total_submerged_volume = 0.0
     weighted_cob = Base.Vector(0, 0, 0)
@@ -531,6 +541,10 @@ def compute_center_of_buoyancy(fcstd_path: str, z_displacement: float = 0.0,
                 "z": round(vaka_ref_body["z"], 2)
             },
             "vaka_world": vaka_ref_world
+        },
+        "total_volumes": {
+            "ama_liters": round(total_ama_volume_mm3 / 1e6, 1),
+            "vaka_liters": round(total_vaka_volume_mm3 / 1e6, 1)
         },
         "components": component_results
     }

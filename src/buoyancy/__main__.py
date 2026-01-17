@@ -40,8 +40,10 @@ def extract_hull_breakdown(cob_result: dict) -> dict:
 
     Returns:
         Dictionary with:
-        - ama_liters: total ama buoyancy volume
-        - vaka_liters: total vaka buoyancy volume
+        - ama_liters: submerged ama buoyancy volume
+        - vaka_liters: submerged vaka buoyancy volume
+        - ama_total_liters: total ama volume
+        - vaka_total_liters: total vaka volume
         - ama_z_world: world z-coordinate of ama bottom reference point
         - vaka_z_world: world z-coordinate of vaka bottom reference point
     """
@@ -64,9 +66,16 @@ def extract_hull_breakdown(cob_result: dict) -> dict:
     ama_z_world = hull_refs.get('ama_world', {}).get('z', 0.0)
     vaka_z_world = hull_refs.get('vaka_world', {}).get('z', 0.0)
 
+    # Get total volumes
+    total_volumes = cob_result.get('total_volumes', {})
+    ama_total_liters = total_volumes.get('ama_liters', 0.0)
+    vaka_total_liters = total_volumes.get('vaka_liters', 0.0)
+
     return {
         'ama_liters': round(ama_liters, 1),
         'vaka_liters': round(vaka_liters, 1),
+        'ama_total_liters': ama_total_liters,
+        'vaka_total_liters': vaka_total_liters,
         'ama_z_world': round(ama_z_world, 0),
         'vaka_z_world': round(vaka_z_world, 0)
     }
@@ -411,10 +420,14 @@ def solve_equilibrium(fcstd_path: str, cog_result: dict,
         'submerged_volume_liters': round(final_cob['submerged_volume_liters'], 2),
         'ama': {
             'submerged_volume_liters': hull_breakdown['ama_liters'],
+            'total_volume_liters': hull_breakdown['ama_total_liters'],
+            'submerged_percent': round(100 * hull_breakdown['ama_liters'] / hull_breakdown['ama_total_liters'], 1) if hull_breakdown['ama_total_liters'] > 0 else 0.0,
             'z_world_mm': hull_breakdown['ama_z_world']
         },
         'vaka': {
             'submerged_volume_liters': hull_breakdown['vaka_liters'],
+            'total_volume_liters': hull_breakdown['vaka_total_liters'],
+            'submerged_percent': round(100 * hull_breakdown['vaka_liters'] / hull_breakdown['vaka_total_liters'], 1) if hull_breakdown['vaka_total_liters'] > 0 else 0.0,
             'z_world_mm': hull_breakdown['vaka_z_world']
         },
         'final_residuals': {
@@ -509,8 +522,8 @@ def main():
         print(f"  Submerged volume: {result['submerged_volume_liters']:.2f} liters")
         ama = result['ama']
         vaka = result['vaka']
-        print(f"    Ama: {ama['submerged_volume_liters']:.1f}L @ z={ama['z_world_mm']:.0f}mm")
-        print(f"    Vaka: {vaka['submerged_volume_liters']:.1f}L @ z={vaka['z_world_mm']:.0f}mm")
+        print(f"    Ama: {ama['submerged_volume_liters']:.1f}L / {ama['total_volume_liters']:.1f}L ({ama['submerged_percent']:.1f}%) @ z={ama['z_world_mm']:.0f}mm")
+        print(f"    Vaka: {vaka['submerged_volume_liters']:.1f}L / {vaka['total_volume_liters']:.1f}L ({vaka['submerged_percent']:.1f}%) @ z={vaka['z_world_mm']:.0f}mm")
         print(f"  Buoyancy force: {result['buoyancy_force_N']:.2f} N")
         print(f"  Output: {args.output}")
 

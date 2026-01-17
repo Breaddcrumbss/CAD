@@ -38,9 +38,10 @@ The build process transforms parameter files into website-ready outputs through 
 |-------|-------|--------|-------------|
 | **parameter** | Boat JSON + Configuration JSON | Merged parameters | Combines boat dimensions with sail configuration |
 | **design** | Parameters | FreeCAD model (.FCStd) | Builds the 3D geometry from parameters |
-| **mass** | FreeCAD model | Mass properties JSON | Calculates volumes, masses, and buoyancy |
-| **color** | FreeCAD model | Colored model | Applies materials and colors for rendering |
-| **render** | Colored model | PNG images | Generates isometric, top, front, right views |
+| **mass** | Design (FreeCAD) | Mass properties JSON | Calculates volumes, masses, and buoyancy |
+| **color** | Design (FreeCAD) | Colored design | Applies materials and colors for rendering |
+| **buoyancy** | Design (FreeCAD), Mass properties | Buoyancy properties | Analyzes buoyancy using Newton's method |
+| **render** | Colored design (FreeCAD) | PNG images | Generates isometric, top, front, right views |
 | **step** | FreeCAD model | STEP file | Exports universal CAD format |
 
 ---

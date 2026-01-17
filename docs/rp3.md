@@ -61,6 +61,31 @@ Dragon boats have been used across Asia for over 2,000 years. The DB22 design re
 
 ---
 
+## Buoyancy analysis
+
+We derive the following buoyancy characteristics from
+our automated analysis using Newton's method, iteratively adjusting the
+roll/pitch/z-offset of the boat according to the difference between the center/amount of buoyancy and the center/amount of mass. The numbers indicate the equilibrium achieved after 
+{{ site.data.rp3_beaching_buoyancy.iterations }} iterations using
+the beaching configuration (no sails and rudders lifted),
+see [implementation](https://github.com/solar-proa/CAD/blob/main/src/buoyancy/__main__.py).
+
+**Z-offset (boat lowering into the water):** {{ site.data.rp3_beaching_buoyancy.equilibrium.z_offset_mm }} mm  
+**Pitch degrees:** {{ site.data.rp3_beaching_buoyancy.equilibrium.pitch_deg }} arc degrees  
+**Roll degrees:** {{ site.data.rp3_beaching_buoyancy.equilibrium.roll_deg }} arc degrees  
+**Vaka submerged volume:** {{ site.data.rp3_beaching_buoyancy.vaka.submerged_volume_liters }} liters  
+**Vaka total volume:** {{ site.data.rp3_beaching_buoyancy.vaka.total_volume_liters }} liters  
+**Vaka submerged percentage:** {{ site.data.rp3_beaching_buoyancy.vaka.submerged_percent }} liters  
+**Vaka z-offset:** {{ site.data.rp3_beaching_buoyancy.vaka.z_world_mm }} mm  
+**Ama submerged volume:** {{ site.data.rp3_beaching_buoyancy.ama.submerged_volume_liters }} liters  
+**Ama total volume:** {{ site.data.rp3_beaching_buoyancy.ama.total_volume_liters }} liters  
+**Ama submerged percentage:** {{ site.data.rp3_beaching_buoyancy.ama.submerged_percent }} liters  
+**Ama z-offset:** {{ site.data.rp3_beaching_buoyancy.ama.z_world_mm }} mm  
+**Center of gravity (world-coordinates x, y, z):** {{ site.data.rp3_beaching_buoyancy.center_of_gravity_world.x }}, {{ site.data.rp3_beaching_buoyancy.center_of_gravity_world.y }}, {{ site.data.rp3_beaching_buoyancy.center_of_gravity_world.z }} mm  
+**Center of buoyancy (world-coordinates x, y, z):** {{ site.data.rp3_beaching_buoyancy.center_of_buoyancy.x }}, {{ site.data.rp3_beaching_buoyancy.center_of_buoyancy.y }}, {{ site.data.rp3_beaching_buoyancy.center_of_buoyancy.z }} mm  
+
+---
+
 ## Key Innovations for Multi-Day Operation
 
 **Extended Solar Capacity:**
@@ -165,7 +190,7 @@ The 2027 timeline allows partners to influence design decisions while maintainin
 
 ## From Prototype to Production
 
-**RP1 (2025):** Proved the concept  
+**RP3 (2025):** Proved the concept  
 **RP2 (2026):** Validates commercial day-tourism operations  
 **RP3 (2027):** Demonstrates multi-day voyage capability
 
