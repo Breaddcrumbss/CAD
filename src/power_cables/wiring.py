@@ -1,4 +1,6 @@
 import Part
+import FreeCAD
+from FreeCAD import Base
 
 
 def create_sweep(group, profile, radius, vertices, name="SweepObject"):
@@ -34,3 +36,19 @@ def create_sweep(group, profile, radius, vertices, name="SweepObject"):
     sweep.Transition = 'Round corner'
 
     return sweep
+
+def draw_panel_wires(side, params):
+    """Draw solar panel wires on the specified side part."""
+    for i in range(0, params['panels_longitudinal'] // 2):
+        for j in range(0, params['panels_transversal']):
+            panel = side.newObject("Part::Feature", f"Panel_{i}_{j} ({'solar' if (i + j) % 2 == 0 else 'solar_dark'})")
+            panel.Shape = Part.makeBox(params['panel_length'],
+                                        params['panel_width'],
+                                        params['panel_height'])
+            panel.Placement = FreeCAD.Placement(
+                Base.Vector(- params['pillar_width'] / 2
+                            + j * params['panel_length'],
+                            params['crossdeck_width'] / 2
+                            + i * params['panel_width'],
+                            params['panel_base_level']),
+                FreeCAD.Rotation(Base.Vector(0, 0, 0), 0))
