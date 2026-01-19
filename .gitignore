@@ -10,9 +10,4 @@ docs/dependency_graph.png
 
 freecad-python
 freecadcmd
-<<<<<<< HEAD
-
 squashfs-root
-=======
-squashfs-root
->>>>>>> da41a25 (update gitignore)
