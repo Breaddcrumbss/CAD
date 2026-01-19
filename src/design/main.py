@@ -287,12 +287,10 @@ if FreeCAD.GuiUp:
 #set_cockpit_view()
 #set_below_view()
 
-# Exit console mode cleanly (but not GUI mode)
-# Note: After destroying the GUI window, we need to exit carefully to avoid segfault
-if not FreeCAD.GuiUp:
-    # Close the document before exiting
-    FreeCAD.closeDocument(doc.Name)
-    # Use os._exit instead of sys.exit to avoid cleanup issues
-    import os
-    os._exit(0)
+# Exit cleanly - always exit when run as a script (not interactively)
+# Close the document before exiting
+FreeCAD.closeDocument(doc.Name)
+# Use os._exit instead of sys.exit to avoid cleanup issues with FreeCAD
+import os as _os
+_os._exit(0)
 
