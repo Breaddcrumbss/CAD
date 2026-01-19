@@ -2,6 +2,10 @@
 """
 CAD Generation wrapper - loads parameters from JSON and generates FreeCAD model.
 This wraps the existing SolarProa.FCMacro with JSON-based parameter loading.
+
+Arguments can be passed via:
+1. Command line: freecad script.py <params.json> <output.FCStd>
+2. Environment variables: PARAMS_PATH and OUTPUT_PATH (for Linux freecadcmd)
 """
 
 import sys
@@ -12,8 +16,24 @@ import json
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-params_path = sys.argv[3]
-output_path = sys.argv[4]
+# Support both command-line args and environment variables
+# On Mac: args come through sys.argv
+# On Linux freecadcmd: args must come through environment variables
+if os.environ.get('PARAMS_PATH') and os.environ.get('OUTPUT_PATH'):
+    params_path = os.environ['PARAMS_PATH']
+    output_path = os.environ['OUTPUT_PATH']
+elif len(sys.argv) >= 5:
+    params_path = sys.argv[3]
+    output_path = sys.argv[4]
+elif len(sys.argv) >= 3:
+    # Direct invocation: python main.py params.json output.FCStd
+    params_path = sys.argv[1]
+    output_path = sys.argv[2]
+else:
+    print("ERROR: No parameters provided", file=sys.stderr)
+    print("Usage: Set PARAMS_PATH and OUTPUT_PATH environment variables", file=sys.stderr)
+    print("   Or: freecad main.py <params.json> <output.FCStd>", file=sys.stderr)
+    sys.exit(1)
 
 print(f"Loading parameters: {params_path}")
 print(f"Output design: {output_path}")

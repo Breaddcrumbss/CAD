@@ -209,7 +209,7 @@ class DesignViewDialog(QtGui.QDialog):
             QtCore.Qt.WindowStaysOnTopHint
         )
 
-        self.setWindowTitle("Solar Proa - Design & View Selector")
+        self.setWindowTitle("Solar Proa Designer")
         self.setMinimumWidth(200)
         self.setMinimumHeight(150)
 
