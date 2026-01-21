@@ -520,9 +520,8 @@ def mirror(side, params):
     trap_cover = side.newObject("Part::Feature", "Trap Cover (plywood)")
     trap_cover.Shape = Part.makeBox(params['crossdeck_length']
                                     - params['panels_transversal'] * params['panel_length'],
-                                    params['panel_width']
-                                    - params['crossdeck_width'] / 2
-                                    - params['aka_width'] / 2,
+                                    params['cockpit_length'] / 2
+                                    - params['crossdeck_width'] / 2,
                                     params['crossdeck_thickness'])
     trap_cover.Placement = FreeCAD.Placement(
         Base.Vector(- params['aka_width'] / 2
