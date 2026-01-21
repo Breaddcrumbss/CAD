@@ -203,9 +203,15 @@ sync-docs:
 	@if [ -f docs/generate_configurations_yaml.py ]; then python3 docs/generate_configurations_yaml.py; fi
 	@echo "✓ Docs sync complete"
 
+# make diagrams
+.PHONY: diagrams
+diagrams: 
+	@echo "making all diagrams..."
+	python3 -m src.validate_structure.diagrams
+
 # serve website locally
 .PHONY: localhost
-localhost: sync-docs
+localhost: sync-docs diagrams
 	@echo "Serving website in localhost..."
 	cd docs; bundle exec jekyll serve
 

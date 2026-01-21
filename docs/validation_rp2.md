@@ -59,6 +59,10 @@ The RP2 structural validation suite analyzes the vessel under eleven load scenar
 
 The outrigger (ama) loses all buoyancy support—for example, when the boat is heeled such that the ama is lifted completely out of the water, or during transport on a trailer. The full weight of the outrigger structure hangs from the akas (crossbeams), which act as cantilevers extending from the vaka (main hull).
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/suspended_ama.png' | relative_url }}" alt="suspended ama" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 Each aka is modeled as a cantilever beam fixed at the vaka gunwale. The outrigger mass is divided into:
@@ -101,6 +105,10 @@ where *S* is the section modulus of the aka's rectangular hollow section (RHS).
 
 During boarding, maintenance, or emergency situations, crew members may need to stand on the akas. This test validates the aka's capacity to support concentrated crew weight at the worst-case location (center of span).
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/aka_point_load.png' | relative_url }}" alt="aka point load" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 The aka is modeled as a simply supported beam with:
@@ -136,6 +144,10 @@ where *P* is the crew weight and *L* is the span between supports.
 ### Scenario
 
 The ama is supported at one end only (e.g., resting on a beach or dock) while the other end hangs free. This creates bending in the spine (longitudinal beam connecting the ama sections) as the akas provide intermediate support of varying stiffness.
+
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/one_end_supported.png' | relative_url }}" alt="one end supported" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
 
 ### Method
 
@@ -174,6 +186,10 @@ A moment distribution analysis determines reactions at each support and the maxi
 
 The mast experiences significant bending loads when sailing in strong winds. The sail force acts at the center of effort (CE), creating a moment about the mast partner (deck-level support).
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/mast_wind.png' | relative_url }}" alt="mast wind" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 Wind force on the sail is estimated using:
@@ -211,6 +227,10 @@ where *ρ* is air density, *V* is wind speed, *C_d* is drag coefficient, and *A*
 ### Scenario
 
 When the boat is tilted (on its side during beaching, or inverted after a capsize), the outrigger weight creates lateral forces on the diagonal braces connecting the pillars to the akas. These braces must resist both compression and tension depending on orientation.
+
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/diagonal_braces.png' | relative_url }}" alt="diagonal braces" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
 
 ### Method
 
@@ -254,6 +274,10 @@ where *L/r* is the slenderness ratio.
 
 When sailing in waves, the ama can slam into the water surface with significant velocity, creating impulsive hydrodynamic loads. This test analyzes vertical wave slam—the ama impacting the water from above.
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/wave_slam_vertical.png' | relative_url }}" alt="wave slam vertical" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 Slam pressure is estimated using the water hammer formula:
@@ -296,6 +320,10 @@ The aka is modeled as a propped cantilever with:
 
 The ama encounters a wave head-on, creating a fore-aft impact force. This load is resisted by the X-shaped cross-braces between neighboring pillars.
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/frontal_wave_slam.png' | relative_url }}" alt="wave slam frontal" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 Frontal slam force is calculated from the ama's cross-sectional area. The X-braces work as a tension-only system: when loaded, the compression diagonal buckles (due to extreme slenderness), and the tension diagonal carries the full load.
@@ -331,6 +359,10 @@ $$\lambda = \frac{L}{r} > 100 \implies \text{tension-only behavior}$$
 
 A wave strikes the ama from the side (athwartships), creating lateral forces. The diagonal pillar braces resist this load in compression.
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/sideways_wave_slam.png' | relative_url }}" alt="wave slam sideways" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 The lateral slam force is calculated from the ama's projected side area (length × diameter). The diagonal braces take the horizontal component of this force.
@@ -357,6 +389,10 @@ The lateral slam force is calculated from the ama's projected side area (length 
 ### Scenario
 
 The boat is lifted by crane for launch, haul-out, or transport. A V-sling configuration uses 4 hooks, each connected by two ropes to neighboring akas, distributing the load across all structural elements.
+
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/lifting_sling.png' | relative_url }}" alt="lifting sling" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
 
 ### Method
 
@@ -395,6 +431,10 @@ Checks include:
 
 The akas transfer all outrigger loads to the vaka through the gunwales. This test validates that the wooden gunwales (3" × 2", fiberglass-bonded to the hull) can carry and distribute the concentrated aka loads.
 
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/gunwale_loads.png' | relative_url }}" alt="gunwale loads" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
+
 ### Method
 
 The gunwale is modeled as a beam on elastic foundation. The characteristic length over which load spreads is:
@@ -432,6 +472,10 @@ Checks include:
 ### Scenario
 
 This informational calculation determines the wind speed at which the heeling moment (wind from the ama side) equals the maximum righting moment, causing the ama to lift clear of the water.
+
+<div style="max-width: 800px; margin: 2em auto;">
+  <img src="{{ '/diagrams/ama_lift_wind.png' | relative_url }}" alt="ama lift wind speed" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+</div>
 
 ### Method
 
