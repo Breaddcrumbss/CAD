@@ -72,6 +72,8 @@ MATERIAL_FILE := $(MATERIAL_DIR)/$(MATERIAL).json
 # MAIN TARGETS
 # ==============================================================================
 
+.DEFAULT_GOAL := all
+
 .PHONY: all
 all: required-all
 
@@ -120,6 +122,7 @@ help:
 	@echo "  make gz                     - Compute GZ righting arm curve (JSON + PNG)"
 	@echo "  make buoyancy-design        - Position boat at equilibrium with water surface"
 	@echo "  make buoyancy-render        - Render images of boat at equilibrium"
+	@echo "  make validate-structure     - Validate structural integrity (all load cases)"
 	@echo ""
 	@echo "Parameter Targets:"
 	@echo "  make parameter              - Compute and save parameter to artifacts/"
@@ -167,9 +170,48 @@ check:
 	@echo ""
 	@echo "System ready!"
 
+# copy artifacts to docs folders for local preview
+.PHONY: sync-docs
+sync-docs:
+	@echo "Syncing artifacts to docs folders..."
+	@mkdir -p docs/_data docs/renders docs/downloads
+	@# Copy JSON files with dots→underscores renaming
+	@for file in artifact/*.json; do \
+		if [ -f "$$file" ]; then \
+			basename=$$(basename "$$file" .json); \
+			newname=$$(echo "$$basename" | tr '.' '_'); \
+			cp "$$file" "docs/_data/$${newname}.json"; \
+		fi \
+	done
+	@echo "  Copied $$(ls artifact/*.json 2>/dev/null | wc -l | tr -d ' ') JSON files to docs/_data/"
+	@# Copy PNG renders
+	@if ls artifact/*.png 1>/dev/null 2>&1; then \
+		cp artifact/*.png docs/renders/; \
+		echo "  Copied $$(ls artifact/*.png | wc -l | tr -d ' ') PNG files to docs/renders/"; \
+	fi
+	@# Copy downloads
+	@if ls artifact/*.FCStd 1>/dev/null 2>&1; then \
+		cp artifact/*.FCStd docs/downloads/; \
+		echo "  Copied $$(ls artifact/*.FCStd | wc -l | tr -d ' ') FCStd files to docs/downloads/"; \
+	fi
+	@if ls artifact/*.step.step 1>/dev/null 2>&1; then \
+		cp artifact/*.step.step docs/downloads/; \
+		echo "  Copied $$(ls artifact/*.step.step | wc -l | tr -d ' ') STEP files to docs/downloads/"; \
+	fi
+	@# Generate YAML files if scripts exist
+	@if [ -f docs/generate_downloads_yaml.py ]; then python3 docs/generate_downloads_yaml.py; fi
+	@if [ -f docs/generate_configurations_yaml.py ]; then python3 docs/generate_configurations_yaml.py; fi
+	@echo "✓ Docs sync complete"
+
+# make diagrams
+.PHONY: diagrams
+diagrams: 
+	@echo "making all diagrams..."
+	python3 -m src.validate_structure.diagrams
+
 # serve website locally
 .PHONY: localhost
-localhost:
+localhost: sync-docs diagrams
 	@echo "Serving website in localhost..."
 	cd docs; bundle exec jekyll serve
 
@@ -220,7 +262,7 @@ DESIGN_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).design.FCStd
 $(DESIGN_ARTIFACT): $(PARAMETER_ARTIFACT) $(DESIGN_SOURCE) | $(DESIGN_DIR)
 	@echo "Generating design: $(BOAT).$(CONFIGURATION)"
 	@echo "  Parameters: $(PARAMETER_ARTIFACT)"
-	@$(FREECAD_CMD) $(DESIGN_DIR)/main.py $(PARAMETER_ARTIFACT) $(DESIGN_ARTIFACT) || true
+	@PARAMS_PATH=$(PARAMETER_ARTIFACT) OUTPUT_PATH=$(DESIGN_ARTIFACT) $(FREECAD_CMD) $(DESIGN_DIR)/main.py || true
 	@if [ -f "$(DESIGN_ARTIFACT)" ]; then \
 		echo "✓ Design complete: $(DESIGN_ARTIFACT)"; \
 		if [ "$(UNAME)" = "Darwin" ]; then \
@@ -458,3 +500,23 @@ buoyancy-render: $(BUOYANCY_DESIGN_ARTIFACT) $(RENDER_SOURCE)
 		echo "ImageMagick not found, skipping crop"; \
 	fi
 	@echo "✓ Buoyancy render complete for $(BOAT).$(CONFIGURATION)"
+
+# ==============================================================================
+# STRUCTURAL VALIDATION
+# ==============================================================================
+
+VALIDATE_STRUCTURE_DIR := $(SRC_DIR)/validate_structure
+VALIDATE_STRUCTURE_SOURCE := $(wildcard $(VALIDATE_STRUCTURE_DIR)/*.py)
+VALIDATE_STRUCTURE_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).validate_structure.json
+
+$(VALIDATE_STRUCTURE_ARTIFACT): $(PARAMETER_ARTIFACT) $(MASS_ARTIFACT) $(GZ_ARTIFACT) $(VALIDATE_STRUCTURE_SOURCE) | $(ARTIFACT_DIR)
+	@echo "Running structural validation: $(BOAT).$(CONFIGURATION)"
+	@python3 -m src.validate_structure \
+		--parameters $(PARAMETER_ARTIFACT) \
+		--mass $(MASS_ARTIFACT) \
+		--gz $(GZ_ARTIFACT) \
+		--output $@
+
+.PHONY: validate-structure
+validate-structure: $(VALIDATE_STRUCTURE_ARTIFACT)
+	@echo "✓ Structural validation complete for $(BOAT).$(CONFIGURATION)"

@@ -2,6 +2,10 @@
 """
 CAD Generation wrapper - loads parameters from JSON and generates FreeCAD model.
 This wraps the existing SolarProa.FCMacro with JSON-based parameter loading.
+
+Arguments can be passed via:
+1. Command line: freecad script.py <params.json> <output.FCStd>
+2. Environment variables: PARAMS_PATH and OUTPUT_PATH (for Linux freecadcmd)
 """
 
 import sys
@@ -12,8 +16,24 @@ import json
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-params_path = sys.argv[3]
-output_path = sys.argv[4]
+# Support both command-line args and environment variables
+# On Mac: args come through sys.argv
+# On Linux freecadcmd: args must come through environment variables
+if os.environ.get('PARAMS_PATH') and os.environ.get('OUTPUT_PATH'):
+    params_path = os.environ['PARAMS_PATH']
+    output_path = os.environ['OUTPUT_PATH']
+elif len(sys.argv) >= 5:
+    params_path = sys.argv[3]
+    output_path = sys.argv[4]
+elif len(sys.argv) >= 3:
+    # Direct invocation: python main.py params.json output.FCStd
+    params_path = sys.argv[1]
+    output_path = sys.argv[2]
+else:
+    print("ERROR: No parameters provided", file=sys.stderr)
+    print("Usage: Set PARAMS_PATH and OUTPUT_PATH environment variables", file=sys.stderr)
+    print("   Or: freecad main.py <params.json> <output.FCStd>", file=sys.stderr)
+    sys.exit(1)
 
 print(f"Loading parameters: {params_path}")
 print(f"Output design: {output_path}")
@@ -89,7 +109,7 @@ if platform.system() == 'Linux' and not App.GuiUp:
         Gui.showMainWindow()
         Gui.getMainWindow().destroy()
         App.ParamGet('User parameter:BaseApp/Preferences/Document').SetBool('SaveThumbnail', False)
-        print("✓ Headless GUI initialized")
+        print("[ok] Headless GUI initialized")
     except Exception as e:
         print(f"Warning: Could not initialize headless GUI: {e}")
         print("ViewObject visibility may not work")
@@ -236,43 +256,19 @@ if platform.system() == 'Linux':
     
     try:
         make_all_visible(doc.Objects)
-        print(f"✓ Visibility set for {len(doc.Objects)} objects")
+        print(f"[ok] Visibility set for {len(doc.Objects)} objects")
     except Exception as e:
         print(f"Warning: Could not set visibility: {e}")
 
 # Save the document
 doc.saveAs(output_path)
 print(f"Saved document to {output_path}")
-if platform.system() == 'Darwin':
-    print("Note: Visibility will be fixed by post-processing on macOS")
-elif platform.system() == 'Linux':
-    print("✓ Objects should be visible when opening")
+print("Design generation complete")
 
-
-# GUI-only code - skip in console mode
-if FreeCAD.GuiUp:
-    if 'view' in sys.modules:
-        del sys.modules['view']
-    from view import * 
-
-    # set preferred view
-    view = FreeCAD.Gui.ActiveDocument.ActiveView
-    view.viewIsometric()
-    view.fitAll()
-
-    set_sail_view()
-
-#set_interior_view()
-#set_mast_view()
-#set_cockpit_view()
-#set_below_view()
-
-# Exit console mode cleanly (but not GUI mode)
-# Note: After destroying the GUI window, we need to exit carefully to avoid segfault
-if not FreeCAD.GuiUp:
-    # Close the document before exiting
-    FreeCAD.closeDocument(doc.Name)
-    # Use os._exit instead of sys.exit to avoid cleanup issues
-    import os
-    os._exit(0)
+# Flush output and exit immediately to prevent FreeCAD from entering interactive mode
+sys.stdout.flush()
+sys.stderr.flush()
+FreeCAD.closeDocument(doc.Name)
+import os as _os
+_os._exit(0)
 
