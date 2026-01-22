@@ -11,6 +11,7 @@
       "mass",
       "render",
       "step",
+      "dxf",
       "buoyancy",
       "gz",
       "buoyancy-design",

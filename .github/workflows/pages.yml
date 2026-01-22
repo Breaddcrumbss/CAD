@@ -64,6 +64,10 @@ jobs:
           # Add to PATH
           echo "$PWD" >> $GITHUB_PATH
       
+      - name: Install Python dependencies for validation
+        run: |
+          pip install matplotlib numpy
+
       - name: Build all required FreeCAD models and run all stages
         run: |
           make required-all
@@ -140,7 +144,7 @@ jobs:
           else
             echo "WARNING: No STEP files found in artifact/"
           fi
-      
+
       - name: Verify files before Jekyll build
         run: |
           echo "=== Files in docs/renders/ ==="

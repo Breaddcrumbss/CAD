@@ -323,6 +323,15 @@ def mirror(side, params):
         FreeCAD.Rotation(Base.Vector(0, 0, 0), 0))
     deck.Shape = deck.Shape.cut(deck_cutter)
 
+    # Test cleat on deck (for visualization)
+    test_cleat = side.newObject("Part::Feature", "Test_Cleat (steel)")
+    test_cleat.Shape = horn_cleat(150, 40, 50)  # 150mm long, 40mm wide, 50mm high
+    test_cleat.Placement = FreeCAD.Placement(
+        Base.Vector(params['vaka_x_offset'],
+                    params['vaka_length'] / 2 - 500,
+                    params['deck_level']),
+        FreeCAD.Rotation(Base.Vector(0, 0, 1), 90))  # rotate to align fore-aft
+
     # mast partner: reinforced deck collar supporting mast laterally 
     # this must be here, not in rig.py (it will rotate otherwise)
     mast_partner = side.newObject("Part::Feature", "Mast Partner (wood)")
@@ -520,9 +529,8 @@ def mirror(side, params):
     trap_cover = side.newObject("Part::Feature", "Trap Cover (plywood)")
     trap_cover.Shape = Part.makeBox(params['crossdeck_length']
                                     - params['panels_transversal'] * params['panel_length'],
-                                    params['panel_width']
-                                    - params['crossdeck_width'] / 2
-                                    - params['aka_width'] / 2,
+                                    params['cockpit_length'] / 2
+                                    - params['crossdeck_width'] / 2,
                                     params['crossdeck_thickness'])
     trap_cover.Placement = FreeCAD.Placement(
         Base.Vector(- params['aka_width'] / 2

@@ -39,7 +39,7 @@
   "sole_thickness": 9,
   "bottom_height_inches": 8,
   
-  "crossdeck_width": 1500,
+  "crossdeck_width": 1540,
   
   "gunwale_width_inches": 3,
   "gunwale_height_inches": 2,
@@ -57,7 +57,7 @@
   "mast_diameter": 152.4,
   "mast_thickness": 6.35,
   "mast_height": 8500,
-  "mast_distance_from_center_offset": 116,
+  "mast_distance_from_center_offset": 0,
   
   "mast_partner_width_offset": 200,
   "mast_partner_thickness": 50,
@@ -121,5 +121,8 @@
   "side_board_plate_length": 300,
   "side_board_plate_height": 300,
   "side_board_plate_thickness": 10,
-  "side_board_plate_above_sole": 600
+  "side_board_plate_above_sole": 600,
+
+  "towing_ring_major_diameter": 120,
+  "towing_ring_minor_diameter": 20
 }
