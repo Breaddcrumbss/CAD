@@ -7,4 +7,6 @@
 
 - add mast sections
 
+- add wind direction
+
 

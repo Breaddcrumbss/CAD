@@ -131,6 +131,10 @@ Partnership structures can be flexibly tailored to organizational priorities.
 
 - [Livio Deltin](https://www.linkedin.com/in/livio-deltin-37936629/), Senior Naval Architect, MEng CEng, Technical Advisor (Pro Bono)
 
+- [Abdullah Farid](https://www.linkedin.com/in/abdullah-engineer/), Engineer, Wärtsilä Marine, Advisor (Pro Bono)
+
+- Jason Wong, Computer Scientist, BSc (Hons) Computer Science (Pro Bono)
+
 **Support:** National University of Singapore, industry sponsors, private donors
 
 ---
