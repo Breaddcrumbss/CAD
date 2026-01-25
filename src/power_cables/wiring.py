@@ -3,6 +3,8 @@ import FreeCAD
 from FreeCAD import Base
 
 
+#TODO: Avoid using object names ("panel"), calculate placements directly from parameters
+
 def create_sweep(group, profile, radius, vertices, name="SweepObject"):
     """Creates a swept solid given a profile (cross section) and list of vertices representing the bends""" 
     edges: list[tuple[Part.Edge, str]] = []
@@ -37,14 +39,14 @@ def create_sweep(group, profile, radius, vertices, name="SweepObject"):
 
     return sweep
 
-def wire_solar_panels(group, radius=5, offset_factor=10, params={}):
+def wire_solar_panels(group, radius=5, transverse_offset=10, central_extension=10, params={}):
     """
     Extracts all solar panels from the group and draws a wire sweep along their length.
     
     Args:
         group: The FreeCAD Document or Group object containing the panels.
         radius: Radius of the wire sweep.
-        offset_factor: Offset factor for colinear wires.
+        transverse_offset: Offset factor for colinear wires.
     """
     panels = []
     
@@ -74,13 +76,17 @@ def wire_solar_panels(group, radius=5, offset_factor=10, params={}):
     
     print(f"groups {y_groups.items()}")
 
+
+    # Compute where the connecting wire should be
+    connecting_wire_z = params.get("deck_width", 0) / 2
+
     for group_y, group_panels in y_groups.items():
         # Sort by X to ensure consistent ordering
         group_panels.sort(key=lambda p: p.Shape.BoundBox.XMin)
 
         # Get the x position of the end of the wire, should be the same for each transverse panel group
-        # TODO: Get the position of the actual central hull, currently draws until the end of the last panel
-        wire_end_x = max(p.Shape.BoundBox.XMax for p in group_panels) + params['deck_width'] / 2
+        panel_end_x = max(p.Shape.BoundBox.XMax for p in group_panels)
+        connecting_wire_x = panel_end_x + params.get("deck_width", 0) / 3
 
         for i, panel in enumerate(group_panels):
             # Get global bounding box of the panel
@@ -94,17 +100,30 @@ def wire_solar_panels(group, radius=5, offset_factor=10, params={}):
             top_z = bbox.ZMax
             
             # Apply offset to prevent colinear wires within the group
-            offset = i * (radius * offset_factor)
+            offset = i * (radius * transverse_offset)
             wire_y = mid_y + offset
             
             # Start at min X, End at central hull
-            # TODO: Draw until the central hull
             start_point = Base.Vector(bbox.XMin, wire_y, top_z)
-            end_point = Base.Vector(wire_end_x, wire_y, top_z)
+            end_point = Base.Vector(panel_end_x, wire_y, top_z)
+
+            # Assuming deck level param is the top of the hull, go a third into the deck width
+            connecting_wire_point = Base.Vector(connecting_wire_x, wire_y, connecting_wire_z)
             
-            wire_name = f"{panel.Name}_Wire"
+            primary_wire_name = f"{panel.Name}_Wire"
             
             try:
-                create_sweep(group, "circle", radius, [start_point, end_point], name=wire_name)
+                create_sweep(group, "circle", radius, [start_point, end_point, connecting_wire_point], name=primary_wire_name)
             except Exception as e:
                 print(f"Failed to wire panel {panel.Name}: {e}")
+
+    # Add Central Connecting Wire
+
+    min_y, max_y = min(y_groups.keys()), max(y_groups.keys())
+    central_start_point = Base.Vector(connecting_wire_x, min_y - central_extension , connecting_wire_z) # type: ignore
+    central_end_point = Base.Vector(connecting_wire_x, max_y + central_extension, connecting_wire_z) # type: ignore
+
+    try:
+        create_sweep(group, "circle", radius, [central_start_point, central_end_point], name="Central_Connecting_Wire")
+    except Exception as e:
+        print(f"Failed to create central connecting wire: {e}")
