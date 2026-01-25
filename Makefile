@@ -288,15 +288,17 @@ CABLES_DIR := $(SRC_DIR)/power_cables
 CABLES_SOURCE := $(wildcard $(CABLES_DIR)/*.py)
 CABLES_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).cables.FCStd
 
-$(CABLES_ARTIFACT): $(DESIGN_ARTIFACT) $(CABLES_SOURCE) | $(ARTIFACT_DIR)
+$(CABLES_ARTIFACT): $(DESIGN_ARTIFACT) $(CABLES_SOURCE) $(PARAMETER_ARTIFACT) | $(ARTIFACT_DIR)
 	@echo "Adding power cables to: $(BOAT).$(CONFIGURATION)"
 	@if [ "$(UNAME)" = "Darwin" ]; then \
 		bash $(CABLES_DIR)/power_cables_mac.sh \
 			--design "$(DESIGN_ARTIFACT)" \
+			--params "$(PARAMETER_ARTIFACT)" \
 			--outputdesign "$(CABLES_ARTIFACT)"; \
 	else \
 		$(FREECAD_PYTHON) -m src.power_cables \
 			--design "$(DESIGN_ARTIFACT)" \
+			--params "$(PARAMETER_ARTIFACT)" \
 			--outputdesign "$(CABLES_ARTIFACT)"; \
 	fi
 	@echo "✓ Cables added: $(CABLES_ARTIFACT)"

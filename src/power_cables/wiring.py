@@ -37,7 +37,7 @@ def create_sweep(group, profile, radius, vertices, name="SweepObject"):
 
     return sweep
 
-def wire_solar_panels(group, radius=5, offset_factor=10):
+def wire_solar_panels(group, radius=5, offset_factor=10, params={}):
     """
     Extracts all solar panels from the group and draws a wire sweep along their length.
     
@@ -80,7 +80,7 @@ def wire_solar_panels(group, radius=5, offset_factor=10):
 
         # Get the x position of the end of the wire, should be the same for each transverse panel group
         # TODO: Get the position of the actual central hull, currently draws until the end of the last panel
-        wire_end_x = max(p.Shape.BoundBox.XMax for p in group_panels)
+        wire_end_x = max(p.Shape.BoundBox.XMax for p in group_panels) + params['deck_width'] / 2
 
         for i, panel in enumerate(group_panels):
             # Get global bounding box of the panel

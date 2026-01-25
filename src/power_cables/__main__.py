@@ -9,6 +9,7 @@ import sys
 import argparse
 import os
 import platform
+import json
 
 # Add paths for imports
 sys.path.insert(0, os.path.dirname(__file__))
@@ -46,6 +47,8 @@ def main():
     )
     parser.add_argument('--design', required=True, 
                        help='Input FCStd design file')
+    parser.add_argument('--params', required=False,
+                       help='Path to parameters artifact JSON file')
     parser.add_argument('--outputdesign', required=True,
                        help='Output FCStd file with power cables')
     
@@ -54,6 +57,15 @@ def main():
     if not os.path.exists(args.design):
         print(f"ERROR: Design file not found: {args.design}", file=sys.stderr)
         sys.exit(1)
+
+    params = {}
+    if args.params:
+        if not os.path.exists(args.params):
+             print(f"ERROR: Parameter file not found: {args.params}", file=sys.stderr)
+             sys.exit(1)
+        print(f"Loading parameters from: {args.params}")
+        with open(args.params, 'r') as f:
+            params = json.load(f)
     
     # Open design
     print(f"Opening design: {args.design}")
@@ -74,7 +86,7 @@ def main():
     
     
     # Calling wiring function
-    wire_solar_panels(doc)
+    wire_solar_panels(doc, params=params)
     
     doc.recompute()
     
