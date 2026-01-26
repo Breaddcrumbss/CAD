@@ -76,9 +76,11 @@ def wire_solar_panels(group, radius=5, transverse_offset=10, central_extension=1
     
     print(f"groups {y_groups.items()}")
 
+    # Compute z-level of panels
+    panel_z = params['panel_base_level'] + params['panel_height']
 
     # Compute where the connecting wire should be
-    connecting_wire_z = params.get("deck_width", 0) / 2
+    connecting_wire_z = params['deck_base_level'] / 2
 
     for group_y, group_panels in y_groups.items():
         # Sort by X to ensure consistent ordering
@@ -86,7 +88,7 @@ def wire_solar_panels(group, radius=5, transverse_offset=10, central_extension=1
 
         # Get the x position of the end of the wire, should be the same for each transverse panel group
         panel_end_x = max(p.Shape.BoundBox.XMax for p in group_panels)
-        connecting_wire_x = panel_end_x + params.get("deck_width", 0) / 3
+        connecting_wire_x = panel_end_x + params['deck_width'] / 3
 
         for i, panel in enumerate(group_panels):
             # Get global bounding box of the panel
@@ -97,15 +99,15 @@ def wire_solar_panels(group, radius=5, transverse_offset=10, central_extension=1
             # Running along the length (X-axis), centered on Width (Y-axis), on Top (Z-axis)
             
             mid_y = group_y
-            top_z = bbox.ZMax
+            # top_z = bbox.ZMax
             
             # Apply offset to prevent colinear wires within the group
             offset = i * (radius * transverse_offset)
             wire_y = mid_y + offset
             
             # Start at min X, End at central hull
-            start_point = Base.Vector(bbox.XMin, wire_y, top_z)
-            end_point = Base.Vector(panel_end_x, wire_y, top_z)
+            start_point = Base.Vector(bbox.XMin, wire_y, panel_z)
+            end_point = Base.Vector(panel_end_x, wire_y, panel_z)
 
             # Assuming deck level param is the top of the hull, go a third into the deck width
             connecting_wire_point = Base.Vector(connecting_wire_x, wire_y, connecting_wire_z)
