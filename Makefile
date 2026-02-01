@@ -178,7 +178,7 @@ check:
 .PHONY: sync-docs
 sync-docs:
 	@echo "Syncing artifacts to docs folders..."
-	@mkdir -p docs/_data docs/renders docs/downloads
+	@mkdir -p docs/_data docs/renders docs/downloads docs/lines
 	@# Copy JSON files with dots→underscores renaming
 	@for file in artifact/*.json; do \
 		if [ -f "$$file" ]; then \
@@ -192,6 +192,16 @@ sync-docs:
 	@if ls artifact/*.png 1>/dev/null 2>&1; then \
 		cp artifact/*.png docs/renders/; \
 		echo "  Copied $$(ls artifact/*.png | wc -l | tr -d ' ') PNG files to docs/renders/"; \
+	fi
+	@# Copy lines plan SVGs
+	@if ls artifact/*.svg 1>/dev/null 2>&1; then \
+		cp artifact/*.svg docs/lines/; \
+		echo "  Copied $$(ls artifact/*.svg | wc -l | tr -d ' ') SVG files to docs/lines/"; \
+	fi
+	@# Copy lines plan PDFs
+	@if ls artifact/*.pdf 1>/dev/null 2>&1; then \
+		cp artifact/*.pdf docs/lines/; \
+		echo "  Copied $$(ls artifact/*.pdf | wc -l | tr -d ' ') PDF files to docs/lines/"; \
 	fi
 	@# Copy downloads
 	@if ls artifact/*.FCStd 1>/dev/null 2>&1; then \
