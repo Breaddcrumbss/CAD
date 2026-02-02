@@ -68,6 +68,11 @@ jobs:
         run: |
           pip install matplotlib numpy
 
+      - name: Install TeX Live and SVG tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y texlive texlive-fonts-extra latexmk librsvg2-bin
+
       - name: Build all required FreeCAD models and run all stages
         run: |
           make required-all
@@ -124,6 +129,26 @@ jobs:
             echo "Copied $(ls artifact/*.png | wc -l) render files"
           else
             echo "WARNING: No render PNG files found in artifact/"
+          fi
+      
+      - name: Copy PDFs to docs/lines folder
+        run: |
+          mkdir -p docs/lines
+          if ls artifact/*.pdf 1> /dev/null 2>&1; then
+            cp artifact/*.pdf docs/lines/
+            echo "Copied $(ls artifact/*.pdf | wc -l) PDF files"
+          else
+            echo "WARNING: No PDF files found in artifact/"
+          fi
+      
+      - name: Copy SVGs to docs/lines folder
+        run: |
+          mkdir -p docs/lines
+          if ls artifact/*.svg 1> /dev/null 2>&1; then
+            cp artifact/*.svg docs/lines/
+            echo "Copied $(ls artifact/*.svg | wc -l) SVG files"
+          else
+            echo "WARNING: No SVG files found in artifact/"
           fi
       
       - name: Copy FCStd models to docs/downloads folder

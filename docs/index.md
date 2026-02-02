@@ -110,14 +110,23 @@ All vessel designs are created using **parametric CAD modeling in FreeCAD and Py
 
 ---
 
-## Partnership Opportunities
+## Partnerships
 
-We welcome strategic partners for:
+We are proud to work with [Dexmarine Pte Ltd](https://dexmarine.com/),
+our electric marine propulsion partner who sponsors the electric propulsion
+system for Roti Proa II.
+
+<div style="margin-bottom: 3em;">
+  <img src="{{ '/logos/dexmarine.png' | relative_url }}" alt="Dexmarine - Marine Supply Service" style="width: 20%; max-width: 1200px; height: auto; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: block; margin: 0 auto;">
+</div>
+
+We welcome further strategic partners for:
 
 - **Field testing collaboration** and operational feedback
 - **Joint development** of eco-tourism protocols
 - **Co-branding opportunities** for sustainability leadership
 - **CSR alignment** through maritime innovation support
+- **Solar power systems** for exploring sustainable maritime transport
 
 Partnership structures can be flexibly tailored to organizational priorities.
 
