@@ -5,7 +5,7 @@ from FreeCAD import Base
 
 #TODO: Avoid using object names ("panel"), calculate placements directly from parameters
 
-def create_sweep(group, profile, radius, vertices, name="SweepObject"):
+def create_sweep(group, profile, radius, vertices, name="SweepObject", color=(0.0, 0.0, 0.0)):
     """Creates a swept solid given a profile (cross section) and list of vertices representing the bends""" 
     edges: list[tuple[Part.Edge, str]] = []
     for i in range(len(vertices) - 1):
@@ -37,95 +37,173 @@ def create_sweep(group, profile, radius, vertices, name="SweepObject"):
     sweep.Frenet = True
     sweep.Transition = 'Round corner'
 
+    if hasattr(sweep, "ViewObject"):
+        sweep.ViewObject.ShapeColor = color
+
     return sweep
 
-def wire_solar_panels(group, radius=5, transverse_offset=10, central_extension=10, params={}):
+def generate_panel_matrix(params):
     """
-    Extracts all solar panels from the group and draws a wire sweep along their length.
+    Generates a matrix of solar panel placements based on parameters from src/design/mirror.py.
+    
+    Each element in the matrix represents a panel and is a tuple of tuples: 
+    ((start_x, end_x), (start_y, end_y), (start_z, end_z)).
+    """
+    panel_matrix = []
+    
+    required_params = ['panels_longitudinal', 'panels_transversal', 'pillar_width', 'panel_length', 'crossdeck_width', 'panel_width', 'panel_base_level', 'panel_height']
+    if not all(k in params for k in required_params):
+        print("Warning: Missing one or more parameters for panel matrix generation. Wiring may be incomplete.")
+        return panel_matrix
+
+    rows = params.get('panels_longitudinal', 0) // 2
+    cols = params.get('panels_transversal', 0)
+
+    for i in range(rows):
+        row_placements = []
+        for j in range(cols):
+            x_pos = -params['pillar_width'] / 2 + j * params['panel_length']
+            y_pos = params['crossdeck_width'] / 2 + i * params['panel_width']
+            z_pos = params['panel_base_level']
+
+            start_x = x_pos
+            end_x = x_pos + params['panel_length']
+            
+            start_y = y_pos
+            end_y = y_pos + params['panel_width']
+            
+            start_z = z_pos
+            end_z = z_pos + params['panel_height']
+            
+            placement = ((start_x, end_x), (start_y, end_y), (start_z, end_z))
+            row_placements.append(placement)
+        panel_matrix.append(row_placements)
+        
+    return panel_matrix
+
+def get_connection_points(panel_matrix):
+    """
+    Computes the connection points (positive & negative) for wiring based on the panel matrix.
+
+    """
+    if not panel_matrix or not panel_matrix[0]:
+        raise ValueError("Panel matrix is empty or malformed.")
+
+    positive_connections = []
+    negative_connections = []
+
+    z_level = panel_matrix[0][0][2][0]  # Base z-level of the first panel
+    for row in panel_matrix:
+        temp_pos = []
+        temp_neg = []
+        for panel in row:
+            (start_x, end_x), (start_y, end_y), _ = panel
+            y_pos, y_neg = (end_y - start_y) / 3 + start_y, (end_y - start_y) / 3 * 2 + start_y
+            x = (end_x - start_x) / 3 + start_x
+
+            temp_pos.append((x, y_pos, z_level))
+            temp_neg.append((x, y_neg, z_level))
+
+        positive_connections.append(temp_pos)
+        negative_connections.append(temp_neg)
+    return positive_connections, negative_connections
+
+def wire_solar_panels(group, radius=5, params={}, string_direction='transverse'):
+    """
+    Generates wiring for all solar panels on both sides of the boat.
     
     Args:
-        group: The FreeCAD Document or Group object containing the panels.
+        group: The FreeCAD Document or Group object to add wires to.
         radius: Radius of the wire sweep.
-        transverse_offset: Offset factor for colinear wires.
+        params: Dictionary of parameters for panel layout.
     """
-    panels = []
     
-    # Handle both Document and Group objects
-    objects = group.Group if hasattr(group, "Group") else group.Objects
+    # Wire colors to be used
+    BLUE = (0.0, 0.0, 1.0)
+    RED = (1.0, 0.0, 0.0)
+    PURPLE  = (1.0, 0.0, 1.0)
+
+
+    biru_side_matrix = generate_panel_matrix(params)[::-1]
+
+    kuning_side_matrix = []
+    for row in biru_side_matrix[::-1]:  # Reverse for proper ordering after reflection
+        mirrored_row = []
+        for placement in row:
+            (start_x, end_x), (start_y, end_y), (start_z, end_z) = placement
+            # Reflect across XZ plane (y -> -y)
+            mirrored_placement = ((start_x, end_x), (-end_y, -start_y), (start_z, end_z))
+            mirrored_row.append(mirrored_placement)
+        kuning_side_matrix.append(mirrored_row)
     
-    for obj in objects:
-        # Assume that all solar panels have 'solar' in their label
-        # Check for 'solar' in label (ignoring case)
-        # Using getattr for safety, defaulting to Name if Label not present/empty
-        label = getattr(obj, "Label", getattr(obj, "Name", ""))
-        if "solar" in label.lower():
-            panels.append(obj)
+    panel_matrix = biru_side_matrix + kuning_side_matrix
+
+    if not panel_matrix:
+        print("Panel matrix is empty, no wires to create.")
+        return
+
+    print(f"Generated a {len(panel_matrix)}x{len(panel_matrix[0]) if panel_matrix and panel_matrix[0] else 0} panel matrix for wiring both sides.")
+
+    if not panel_matrix[0]:
+        return
+
+    # Get positive and negative endpoints for each panel
+    positive_connections, negative_connections = get_connection_points(panel_matrix)
+
+    # Draw wires
+    dummy_positive_end = Base.Vector(0, 100, -100)
+    dummy_negative_end = Base.Vector(0, -100, -100)
+
+    # Draw central wire
+    central_x = panel_matrix[0][1][0][1] + params['deck_width'] / 3  # Place in the middle of the deck
+    central_y_start = panel_matrix[0][0][1][1]
+    central_y_end = panel_matrix[-1][0][1][0]
+    central_z = params['deck_level'] / 2
+
+    central_start = Base.Vector(central_x, central_y_start, central_z)
+    central_end = Base.Vector(central_x, central_y_end, central_z)
+
+    create_sweep(group, "circle", radius, [central_start, central_end], name="Central_Wire")
+
+    k = params['panels_per_string']
+    prev_point = None
+    counter = 0
+
+    for i, panel_row in enumerate(panel_matrix):
+        for j, panel in enumerate(panel_row):
+            if i % 2 == 1:
+                j = (len(panel_row) - 1) - j  # Reverse order for every second row
+
+            if counter % k == 0:
+                # Start of a new string, connect from central to positive end
+                panel_positive = positive_connections[i][j]
+                bend = Base.Vector(panel_positive[0], panel_positive[1], central_z)
+                central_point = Base.Vector(central_x, panel_positive[1], central_z)
+                wire_name = f"Panel_Wire_Pos_{i}_{j}"
+                prev_point = negative_connections[i][j]
+                color = RED
+
+                create_sweep(group, "circle", radius, [panel_positive, bend, central_point], name=wire_name, color=color) # Blue wire
+
+
+            else:
+                if (counter % k) == (k - 1):
+                    # End of a string, connect to negative end in central
+                    panel_negative = negative_connections[i][j]
+                    bend = Base.Vector(panel_negative[0], panel_negative[1], central_z)
+                    central_point = Base.Vector(central_x, panel_negative[1], central_z)
+                    wire_name = f"Panel_Wire_Neg_{i}_{j}"
+                    color = BLUE
+
+                    create_sweep(group, "circle", radius, [panel_negative, bend, central_point], name=wire_name, color=color) # Blue wire
+
+                # Connnect two panels
+                start_point = prev_point
+                end_point = positive_connections[i][j]
+                wire_name = f"Panel_Wire_Neg_to_Pos{i}_{j}"
+                prev_point = negative_connections[i][j]
+                color = PURPLE
             
-    print(f"Found {len(panels)} solar panels to wire.")
+                create_sweep(group, "circle", radius, [start_point, end_point], name=wire_name, color=color)
 
-    # Group panels by their approximate Y-center to handle colinear placements
-    y_groups = {}
-    for panel in panels:
-        bbox = panel.Shape.BoundBox
-        mid_y = (bbox.YMin + bbox.YMax) / 2
-        # Round to avoid floating point precision issues when grouping
-        key = round(mid_y, 4)
-        if key not in y_groups:
-            y_groups[key] = []
-        y_groups[key].append(panel)
-    
-    print(f"groups {y_groups.items()}")
-
-    # Compute z-level of panels
-    panel_z = params['panel_base_level'] + params['panel_height']
-
-    # Compute where the connecting wire should be
-    connecting_wire_z = params['deck_base_level'] / 2
-
-    for group_y, group_panels in y_groups.items():
-        # Sort by X to ensure consistent ordering
-        group_panels.sort(key=lambda p: p.Shape.BoundBox.XMin)
-
-        # Get the x position of the end of the wire, should be the same for each transverse panel group
-        panel_end_x = max(p.Shape.BoundBox.XMax for p in group_panels)
-        connecting_wire_x = panel_end_x + params['deck_width'] / 3
-
-        for i, panel in enumerate(group_panels):
-            # Get global bounding box of the panel
-            # panel.Shape returns the shape with Placement applied (global coords)
-            bbox = panel.Shape.BoundBox
-            
-            # Calculate start and end points for the wire
-            # Running along the length (X-axis), centered on Width (Y-axis), on Top (Z-axis)
-            
-            mid_y = group_y
-            # top_z = bbox.ZMax
-            
-            # Apply offset to prevent colinear wires within the group
-            offset = i * (radius * transverse_offset)
-            wire_y = mid_y + offset
-            
-            # Start at min X, End at central hull
-            start_point = Base.Vector(bbox.XMin, wire_y, panel_z)
-            end_point = Base.Vector(panel_end_x, wire_y, panel_z)
-
-            # Assuming deck level param is the top of the hull, go a third into the deck width
-            connecting_wire_point = Base.Vector(connecting_wire_x, wire_y, connecting_wire_z)
-            
-            primary_wire_name = f"{panel.Name}_Wire"
-            
-            try:
-                create_sweep(group, "circle", radius, [start_point, end_point, connecting_wire_point], name=primary_wire_name)
-            except Exception as e:
-                print(f"Failed to wire panel {panel.Name}: {e}")
-
-    # Add Central Connecting Wire
-
-    min_y, max_y = min(y_groups.keys()), max(y_groups.keys())
-    central_start_point = Base.Vector(connecting_wire_x, min_y - central_extension , connecting_wire_z) # type: ignore
-    central_end_point = Base.Vector(connecting_wire_x, max_y + central_extension, connecting_wire_z) # type: ignore
-
-    try:
-        create_sweep(group, "circle", radius, [central_start_point, central_end_point], name="Central_Connecting_Wire")
-    except Exception as e:
-        print(f"Failed to create central connecting wire: {e}")
+            counter += 1
