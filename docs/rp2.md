@@ -105,31 +105,6 @@ The vessel can be configured for different sailing conditions and use cases:
 
 ---
 
-## 3D Renders
-
-*Automatically generated from parametric CAD models*
-
-{% assign render_files = site.static_files | where_exp: "file", "file.path contains 'renders'" | where_exp: "file", "file.path contains 'rp2'" | where_exp: "file", "file.extname == '.png'" %}
-
-{% for config in site.data.configurations %}
-  <h3>{{ config.display_name }}</h3>
-
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin: 2em 0;">
-  {% assign config_files = render_files | where_exp: "file", "file.basename contains config.name" | sort: "basename" %}
-  {% for file in config_files %}
-    {% assign view_name = file.basename | split: ".render." | last %}
-    <div>
-      <img src="{{ file.path | relative_url }}" alt="{{ file.basename }}" style="width: 100%; border: 1px solid #ddd; border-radius: 4px;">
-      <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 0.5em;">
-        {{ file.basename | remove: "rp2." | remove: config.name | remove: ".render." | remove: "_" | replace: "front", "Back View" | replace: "isometric", "Isometric View" | replace: "right", "Right View" | replace: "top", "Top View" }}
-      </p>
-    </div>
-  {% endfor %}
-  </div>
-{% endfor %}
-
----
-
 ## Project Status
 
 **Current Phase:** Under Construction
