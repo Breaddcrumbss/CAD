@@ -149,6 +149,8 @@ National University of Singapore.
 
 - Ong Miao Ying, Clara, Robotics & Machine Intelligence, Second Major in Innovation & Design, BEng 2029 
 
+- Rahul Pradhan, Electrical Engineering, BEng 2029
+
 - Tan Jia Jun, Mechanical Engineering, BEng 2027
 
 **Technical Advisors:**

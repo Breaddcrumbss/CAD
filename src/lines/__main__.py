@@ -1271,6 +1271,20 @@ def generate_latex(boat_name, config_name, params, sections, horizontal_sections
         )
     horizontal_figures = "\n\n".join(horizontal_pages)
 
+    # Compute page numbers dynamically
+    # Page 1: Summary
+    # Pages 2-4: Profile (vaka, vaka+rudder, ama)
+    # Body plan: one page per section, starting at page 5
+    # Full breadth: one page after body plan
+    # Horizontal sections: one page per section after full breadth
+    profile_start = 2
+    profile_end = 4
+    body_start = profile_end + 1
+    body_end = body_start + len(sections) - 1
+    breadth_page = body_end + 1
+    horiz_start = breadth_page + 1
+    horiz_end = horiz_start + len(horizontal_sections) - 1
+
     latex = f"""\\documentclass[a3paper,landscape]{{article}}
 \\usepackage[margin=20mm]{{geometry}}
 \\usepackage{{graphicx}}
@@ -1422,17 +1436,16 @@ Onboard battery capacity & 8 kWh \\\\
 %
 \\begin{{minipage}}[t]{{0.30\\textwidth}}
 \\subsection*{{Notes}}
-Pages 2--11 show the detailed lines plan
+Pages {profile_start}--{horiz_end} show the detailed lines plan
     of the {boat_name.upper()} solar-electric proa
     in the {config_name} configuration (front rudder raised).
 
 \\subsubsection*{{Views}}
 \\begin{{itemize}}
-    \\item \\textbf{{Profile (Sheer Plan)}} (pages 2--4)
-          longitudinal shape and freeboard (center vaka, rudder, and
-    center ama sections)
-    \\item \\textbf{{Full Breadth Plan}} (page 5)
-    \\item \\textbf{{Body Plan}} (pages 6--11)
+    \\item \\textbf{{Profile (Sheer Plan)}} (pages {profile_start}--{profile_end})
+    \\item \\textbf{{Body Plan}} (pages {body_start}--{body_end})
+    \\item \\textbf{{Full Breadth Plan}} (page {breadth_page})
+    \\item \\textbf{{Horizontal Sections}} (pages {horiz_start}--{horiz_end})
 \\end{{itemize}}
 
 \\textbf{{Section Locations:}}
@@ -1495,6 +1508,9 @@ than the traditional half-sections used for symmetric hulls.
 \\caption{{Profile---Ama centerline section (X=0)}}
 \\end{{figure}}
 
+%% ===== BODY PLAN SECTIONS =====
+{section_figures}
+
 %% ===== FULL BREADTH PLAN =====
 \\newpage
 
@@ -1509,10 +1525,7 @@ than the traditional half-sections used for symmetric hulls.
 }}
 \\caption{{Full breadth plan---View from above (solar panels hatched)}}
 \\end{{figure}}
-
-%% ===== BODY PLAN SECTIONS =====
-{section_figures}
-
+    
 %% ===== HORIZONTAL SECTIONS =====
 \\newpage
 {horizontal_figures}
