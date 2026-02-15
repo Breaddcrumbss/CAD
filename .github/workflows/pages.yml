@@ -66,7 +66,7 @@ jobs:
       
       - name: Install Python dependencies for validation
         run: |
-          pip install matplotlib numpy
+          pip install matplotlib numpy shipshape
 
       - name: Install TeX Live and SVG tools
         run: |
@@ -91,7 +91,7 @@ jobs:
 
       - name: Generate diagrams
         run: |
-          python3 -m src.validate_structure.diagrams
+          python3 -m shipshape.validate_structure.diagrams
 
       - name: Copy constant files to docs/_data
         run: |
