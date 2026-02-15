@@ -135,7 +135,6 @@ Kami menyambut mitra strategis lebih lanjut untuk:
 - **Pengembangan bersama** protokol eko-wisata
 - **Peluang co-branding** untuk kepemimpinan keberlanjutan
 - **Keselarasan CSR** melalui dukungan inovasi maritim
-- **Sistem tenaga surya** untuk mengeksplorasi transportasi maritim berkelanjutan
 
 Struktur kemitraan dapat disesuaikan secara fleksibel dengan prioritas organisasi.
 

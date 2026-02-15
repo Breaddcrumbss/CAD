@@ -133,7 +133,6 @@ We welcome further strategic partners for:
 - **Joint development** of eco-tourism protocols
 - **Co-branding opportunities** for sustainability leadership
 - **CSR alignment** through maritime innovation support
-- **Solar power systems** for exploring sustainable maritime transport
 
 Partnership structures can be flexibly tailored to organizational priorities.
 
