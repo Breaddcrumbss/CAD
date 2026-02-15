@@ -222,7 +222,7 @@ sync-docs:
 .PHONY: diagrams
 diagrams: 
 	@echo "making all diagrams..."
-	python3 -m src.validate_structure.diagrams
+	python3 -m shipshape.validate_structure.diagrams
 
 # serve website locally
 .PHONY: localhost
@@ -250,14 +250,12 @@ graph:
 # PARAMETER COMPUTATION
 # ==============================================================================
 
-PARAMETER_DIR := $(SRC_DIR)/parameter
-PARAMETER_SOURCE := $(wildcard $(PARAMETER_DIR)/*.py)
 PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameter.json
 
-$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) $(PARAMETER_SOURCE)
+$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE)
 	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."
 	@mkdir -p $(ARTIFACT_DIR)
-	@python3 -m src.parameter \
+	@python3 -m shipshape.parameter \
 		--boat $(BOAT_FILE) \
 		--configuration $(CONFIGURATION_FILE) \
 		--output $@
@@ -522,13 +520,11 @@ buoyancy-render: $(BUOYANCY_DESIGN_ARTIFACT) $(RENDER_SOURCE)
 # STRUCTURAL VALIDATION
 # ==============================================================================
 
-VALIDATE_STRUCTURE_DIR := $(SRC_DIR)/validate_structure
-VALIDATE_STRUCTURE_SOURCE := $(wildcard $(VALIDATE_STRUCTURE_DIR)/*.py)
 VALIDATE_STRUCTURE_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).validate_structure.json
 
-$(VALIDATE_STRUCTURE_ARTIFACT): $(PARAMETER_ARTIFACT) $(MASS_ARTIFACT) $(GZ_ARTIFACT) $(VALIDATE_STRUCTURE_SOURCE) | $(ARTIFACT_DIR)
+$(VALIDATE_STRUCTURE_ARTIFACT): $(PARAMETER_ARTIFACT) $(MASS_ARTIFACT) $(GZ_ARTIFACT) | $(ARTIFACT_DIR)
 	@echo "Running structural validation: $(BOAT).$(CONFIGURATION)"
-	@python3 -m src.validate_structure \
+	@python3 -m shipshape.validate_structure \
 		--parameters $(PARAMETER_ARTIFACT) \
 		--mass $(MASS_ARTIFACT) \
 		--gz $(GZ_ARTIFACT) \
