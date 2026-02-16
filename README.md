@@ -44,6 +44,22 @@ constants/
 
 Analysis and validation are provided by [shipshape](https://github.com/solar-proa/shipshape): parameter computation, mass analysis, buoyancy equilibrium, GZ curves, and structural validation.
 
+## Development Setup
+
+If you're working on both this repo and the [shipshape](https://github.com/solar-proa/shipshape) library simultaneously, install shipshape as an editable package so that local changes take effect immediately:
+
+```bash
+pip install -e /path/to/shipshape
+```
+
+This is needed because `make` invokes shipshape modules (e.g. `python -m shipshape.buoyancy`) which require the package to be importable. An editable install creates a symlink rather than copying files, so any changes you make in the shipshape source tree are picked up without reinstalling. To revert: `pip uninstall shipshape`.
+
+If you use a separate conda environment for FreeCAD-dependent stages (buoyancy, mass, GZ), install it there too:
+
+```bash
+/path/to/conda/envs/freecad/bin/pip install -e /path/to/shipshape
+```
+
 ## Getting Started
 
 0. Install `git` and `make`:

@@ -430,14 +430,16 @@ step: $(STEP_ARTIFACT)
 # BUOYANCY EQUILIBRIUM ANALYSIS
 # ==============================================================================
 
+HULL_GROUPS_FILE := $(CONST_DIR)/hull_groups.json
 BUOYANCY_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).buoyancy.json
 
-$(BUOYANCY_ARTIFACT): $(DESIGN_ARTIFACT) $(MASS_ARTIFACT) $(MATERIAL_FILE) | $(ARTIFACT_DIR)
+$(BUOYANCY_ARTIFACT): $(DESIGN_ARTIFACT) $(MASS_ARTIFACT) $(MATERIAL_FILE) $(HULL_GROUPS_FILE) | $(ARTIFACT_DIR)
 	@echo "Running buoyancy analysis: $(BOAT).$(CONFIGURATION)"
 	@PYTHONPATH=$(FREECAD_LIB):$(PWD) $(CONDA_PYTHON) -m shipshape.buoyancy \
 		--design $(DESIGN_ARTIFACT) \
 		--mass $(MASS_ARTIFACT) \
 		--materials $(MATERIAL_FILE) \
+		--hull-groups $(HULL_GROUPS_FILE) \
 		--output $@
 
 .PHONY: buoyancy
