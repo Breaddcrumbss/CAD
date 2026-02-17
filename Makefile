@@ -229,7 +229,7 @@ sync-docs:
 .PHONY: diagrams
 diagrams: 
 	@echo "making all diagrams..."
-	python3 -m shipshape.validate_structure.diagrams
+	PYTHONPATH=$(PWD) python3 -m src.structural.diagrams
 
 # serve website locally
 .PHONY: localhost
@@ -528,7 +528,7 @@ VALIDATE_STRUCTURE_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).validate
 
 $(VALIDATE_STRUCTURE_ARTIFACT): $(PARAMETER_ARTIFACT) $(MASS_ARTIFACT) $(GZ_ARTIFACT) | $(ARTIFACT_DIR)
 	@echo "Running structural validation: $(BOAT).$(CONFIGURATION)"
-	@python3 -m shipshape.validate_structure \
+	@PYTHONPATH=$(PWD) python3 -m src.structural \
 		--parameters $(PARAMETER_ARTIFACT) \
 		--mass $(MASS_ARTIFACT) \
 		--gz $(GZ_ARTIFACT) \
