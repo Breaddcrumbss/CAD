@@ -1,4 +1,4 @@
-# Solar Proa
+# Solar proa CAD models
 
 ## About
 
@@ -36,29 +36,13 @@ src/
   step/                  Export to STEP format
   lines/                 Generate lines plan drawings
   buoyancy_design/       Position the boat at equilibrium in FreeCAD
-constants/
-  boats/                 Boat specifications (rp2.json, rp4.json, ...)
-  configurations/        Sail/rudder configurations (closehaul.json, ...)
+constant/
+  boat/                  Boat specifications (rp2.json, rp4.json, ...)
+  configuration/         Sail/rudder configurations (closehaul.json, ...)
   material/              Material properties
 ```
 
 Analysis and validation are provided by [shipshape](https://github.com/solar-proa/shipshape): parameter computation, mass analysis, buoyancy equilibrium, GZ curves, and structural validation.
-
-## Development Setup
-
-If you're working on both this repo and the [shipshape](https://github.com/solar-proa/shipshape) library simultaneously, install shipshape as an editable package so that local changes take effect immediately:
-
-```bash
-pip install -e /path/to/shipshape
-```
-
-This is needed because `make` invokes shipshape modules (e.g. `python -m shipshape.buoyancy`) which require the package to be importable. An editable install creates a symlink rather than copying files, so any changes you make in the shipshape source tree are picked up without reinstalling. To revert: `pip uninstall shipshape`.
-
-If you use a separate conda environment for FreeCAD-dependent stages (buoyancy, mass, GZ), install it there too:
-
-```bash
-/path/to/conda/envs/freecad/bin/pip install -e /path/to/shipshape
-```
 
 ## Getting Started
 
@@ -100,10 +84,10 @@ or
 ```
 make step BOAT=rp2 CONFIG=closehaul
 ```
-The generated files are placed in the folder `artifacts`, for example:
+The generated files are placed in the folder `artifact`, for example:
 ```
-artifacts/rp2.closehaul.design.FCStd
-artifacts/rp2.closehaul.step.step
+artifact/rp2.closehaul.design.FCStd
+artifact/rp2.closehaul.step.step
 ```
 
 ## Continuous Integration/Continuous Deployment (CICD)
