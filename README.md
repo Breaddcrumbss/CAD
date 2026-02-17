@@ -67,7 +67,7 @@ If you use a separate conda environment for FreeCAD-dependent stages (buoyancy, 
 - **macOS**: [Install Git](https://git-scm.com/install/mac), then run `xcode-select --install` for `make`
 - **Windows**: [Git for Windows](https://git-scm.com/download/win) (includes Git Bash with `make`)
 
-1. Clone this repository with `git clone `git@github.com:solar-proa/CAD.git`
+1. Clone this repository with `git clone git@github.com:solar-proa/CAD.git`
 
 2. Install [FreeCAD](https://www.freecad.org/)
 
