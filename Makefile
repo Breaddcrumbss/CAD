@@ -250,6 +250,14 @@ graph:
 	@python3 docs/generate_dependency_graph.py docs/dependency_graph.png
 
 # ==============================================================================
+# DEPENDENCY MANAGEMENT
+# ==============================================================================
+
+.deps: requirements.txt
+	pip install -r requirements.txt
+	@touch $@
+
+# ==============================================================================
 # STAGES
 # ==============================================================================
 
@@ -259,7 +267,7 @@ graph:
 
 PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).parameter.json
 
-$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE)
+$(PARAMETER_ARTIFACT): $(BOAT_FILE) $(CONFIGURATION_FILE) .deps
 	@echo "Computing parameters for $(BOAT) and $(CONFIGURATION)..."
 	@mkdir -p $(ARTIFACT_DIR)
 	@PYTHONPATH=$(PWD) python3 -m shipshape.parameter \
