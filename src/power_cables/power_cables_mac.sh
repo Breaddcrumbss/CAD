@@ -4,15 +4,41 @@
 # macOS requires GUI mode to properly persist ViewObject properties (if needed).
 # This script opens the design in FreeCAD GUI, applies cables, saves, and quits.
 
-if [ $# -lt 3 ]; then
-    echo "Usage: $0 <input.FCStd> <params.json> <output.FCStd> [freecad_path]"
+# Default FreeCAD path
+FREECAD="/Applications/FreeCAD.app/Contents/MacOS/FreeCAD"
+
+# Parse named arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --design)
+            INPUT_FCSTD="$2"
+            shift 2
+            ;;
+        --params)
+            PARAMS_JSON="$2"
+            shift 2
+            ;;
+        --outputdesign)
+            OUTPUT_FCSTD="$2"
+            shift 2
+            ;;
+        --freecad)
+            FREECAD="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 --design <input.FCStd> --params <params.json> --outputdesign <output.FCStd> [--freecad <path>]"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [ -z "$INPUT_FCSTD" ] || [ -z "$PARAMS_JSON" ] || [ -z "$OUTPUT_FCSTD" ]; then
+    echo "Usage: $0 --design <input.FCStd> --params <params.json> --outputdesign <output.FCStd> [--freecad <path>]"
     exit 1
 fi
-
-INPUT_FCSTD="$1"
-PARAMS_JSON="$2"
-OUTPUT_FCSTD="$3"
-FREECAD="${4:-/Applications/FreeCAD.app/Contents/MacOS/FreeCAD}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -f "$INPUT_FCSTD" ]; then

@@ -143,6 +143,44 @@ def export_section_svgs(shapes, section_positions, output_dir, base_name, params
             print(f"  Error exporting section '{name}': {e}", flush=True)
             traceback.print_exc()
 
+    # Combined body plan (all sections overlayed, clipped, all black)
+    try:
+        print("  Creating combined body plan (clipped)...", flush=True)
+        plane_normal = App.Vector(0, 1, 0)
+        wire_groups = []
+        for name, y_pos in section_positions:
+            wires = slice_shapes_safely(shapes, plane_normal, y_pos)
+            if wires:
+                wire_groups.append((wires, 'black'))
+        if wire_groups:
+            svg_path = os.path.join(output_dir, f"{base_name}.bodyplan.svg")
+            export_wire_groups_to_svg(wire_groups, svg_path, view='XZ',
+                                     target_size=400, clip_z=clip_z)
+            print(f"    Exported combined body plan: {svg_path}", flush=True)
+    except Exception as e:
+        import traceback
+        print(f"  Error exporting combined body plan: {e}", flush=True)
+        traceback.print_exc()
+
+    # Combined body plan (all sections overlayed, clipped, all black)
+    try:
+        print("  Creating combined body plan (clipped)...", flush=True)
+        plane_normal = App.Vector(0, 1, 0)
+        wire_groups = []
+        for name, y_pos in section_positions:
+            wires = slice_shapes_safely(shapes, plane_normal, y_pos)
+            if wires:
+                wire_groups.append((wires, 'black'))
+        if wire_groups:
+            svg_path = os.path.join(output_dir, f"{base_name}.bodyplan.svg")
+            export_wire_groups_to_svg(wire_groups, svg_path, view='XZ',
+                                     target_size=400, clip_z=clip_z)
+            print(f"    Exported combined body plan: {svg_path}", flush=True)
+    except Exception as e:
+        import traceback
+        print(f"  Error exporting combined body plan: {e}", flush=True)
+        traceback.print_exc()
+
 
 def export_wire_groups_to_svg(wire_groups, svg_path, view='XZ', target_size=800, stroke_width=1.0, clip_z=None):
     """Export multiple groups of wires to an SVG file with different colors.
@@ -743,17 +781,17 @@ def export_summary_svgs(shapes, section_positions, output_dir, base_name, params
         normal = App.Vector(1, 0, 0)
         wire_groups = []
 
-        # Ama in light grey (background)
+        # Ama
         ama_wires = slice_shapes_safely(shapes, normal, ama_x)
         if ama_wires:
-            wire_groups.append((ama_wires, '#CCCCCC'))
+            wire_groups.append((ama_wires, 'black'))
 
-        # Vaka in medium grey
+        # Vaka
         vaka_wires = slice_shapes_safely(shapes, normal, vaka_x)
         if vaka_wires:
-            wire_groups.append((vaka_wires, '#666666'))
+            wire_groups.append((vaka_wires, 'black'))
 
-        # Rudder in black (foreground)
+        # Rudder
         rudder_wires = slice_shapes_safely(shapes, normal, rudder_x)
         if rudder_wires:
             wire_groups.append((rudder_wires, 'black'))
@@ -761,6 +799,14 @@ def export_summary_svgs(shapes, section_positions, output_dir, base_name, params
         if wire_groups:
             export_wire_groups_to_svg(wire_groups, svg_path, view='YZ', target_size=600)
             print(f"    Exported summary profile: {svg_path}", flush=True)
+
+            # Clipped version (for full-page detail view)
+            deck_level = params.get('deck_level', 1540)
+            clip_z = deck_level + 1000
+            svg_path_clipped = os.path.join(output_dir, f"{base_name}.profile.all.svg")
+            export_wire_groups_to_svg(wire_groups, svg_path_clipped, view='YZ',
+                                     target_size=600, clip_z=clip_z)
+            print(f"    Exported combined profile (clipped): {svg_path_clipped}", flush=True)
 
     except Exception as e:
         import traceback
@@ -775,15 +821,10 @@ def export_summary_svgs(shapes, section_positions, output_dir, base_name, params
         normal = App.Vector(0, 1, 0)
         wire_groups = []
 
-        # Use different grey levels for each section
-        num_sections = len(section_positions)
-        for i, (name, y_pos) in enumerate(section_positions):
+        for name, y_pos in section_positions:
             wires = slice_shapes_safely(shapes, normal, y_pos)
             if wires:
-                # Gradient from light grey to black
-                grey_level = int(200 - (180 * i / max(num_sections - 1, 1)))
-                color = f'#{grey_level:02x}{grey_level:02x}{grey_level:02x}'
-                wire_groups.append((wires, color))
+                wire_groups.append((wires, 'black'))
                 print(f"    Section {name} (Y={y_pos:.0f}): {len(wires)} wires", flush=True)
 
         if wire_groups:
@@ -1177,7 +1218,20 @@ def generate_latex(boat_name, config_name, params, sections, scale, base_name, o
     ])
 
     # Generate section pages for LaTeX - each section on its own page
-    section_pages = [f"\\section*{{Body Plan}}"]
+    section_pages = [
+        f"\\section*{{Body Plan (all sections)}}\n\n"
+        f"\\begin{{figure}}[H]\n"
+        f"\\centering\n"
+        f"\\IfFileExists{{{base_name}.bodyplan.pdf}}{{%\n"
+        f"    \\includegraphics[width=0.95\\textwidth,height=0.85\\textheight,keepaspectratio]{{{base_name}.bodyplan.pdf}}\n"
+        f"}}{{%\n"
+        f"    \\textit{{(Body plan: see {escape_latex(base_name)}.FCStd)}}\n"
+        f"}}\n"
+        f"\\caption{{Combined body plan---All sections overlayed}}\n"
+        f"\\end{{figure}}"
+        f"\\newpage\n"
+        f"\\section*{{Body Plan Sections}}"
+    ]
     for name, y_pos in sections:
         svg_name = f"{base_name}.section.{name}"
         section_pages.append(
@@ -1193,6 +1247,39 @@ def generate_latex(boat_name, config_name, params, sections, scale, base_name, o
             f"\\end{{figure}}"
         )
     section_figures = "\n\n".join(section_pages)
+
+    # Generate horizontal section pages for LaTeX
+    horizontal_pages = [f"\\section*{{Horizontal Sections}}"]
+    for name, z_pos in horizontal_sections:
+        svg_name = f"{base_name}.horizontal.{name}"
+        horizontal_pages.append(
+            f"%% ===== HORIZONTAL: {name} =====\n"
+            f"\\begin{{figure}}[H]\n"
+            f"\\centering\n"
+            f"\\IfFileExists{{{svg_name}.pdf}}{{%\n"
+            f"    \\includegraphics[width=0.95\\textwidth,height=0.85\\textheight,keepaspectratio]{{{svg_name}.pdf}}\n"
+            f"}}{{%\n"
+            f"    \\textit{{(Horizontal section {escape_latex(name)}: see {escape_latex(base_name)}.FCStd)}}\n"
+            f"}}\n"
+            f"\\caption{{Horizontal Section---{escape_latex(name)} (Z={z_pos:.0f}mm)}}\n"
+            f"\\end{{figure}}"
+        )
+    horizontal_figures = "\n\n".join(horizontal_pages)
+
+    # Compute page numbers dynamically
+    # Page 1: Summary
+    # Page 2: Combined profile (all sections, clipped)
+    # Pages 3-5: Profile (vaka, vaka+rudder, ama)
+    # Body plan: one page per section, starting after profiles
+    # Full breadth: one page after body plan
+    # Horizontal sections: one page per section after full breadth
+    profile_start = 2
+    profile_end = 5
+    body_start = profile_end + 1
+    body_end = body_start + len(sections) - 1
+    breadth_page = body_end + 1
+    horiz_start = breadth_page + 1
+    horiz_end = horiz_start + len(horizontal_sections) - 1
 
     latex = f"""\\documentclass[a3paper,landscape]{{article}}
 \\usepackage[margin=20mm]{{geometry}}
@@ -1218,7 +1305,7 @@ def generate_latex(boat_name, config_name, params, sections, scale, base_name, o
 %% Profile at top (full width)
 \\noindent
 \\begin{{minipage}}[t]{{0.30\\textwidth}}
-\\subsection*{{Profile (vaka, rudder and ama sections)}}
+\\subsection*{{Profile (all sections)}}
 \\noindent
 \\IfFileExists{{{base_name}.summary.profile.pdf}}{{%
 \\noindent
@@ -1372,10 +1459,25 @@ than the traditional half-sections used for symmetric hulls.
 %\\textit{{Drawing reference: {escape_latex(base_name)}}}
 %\\end{{center}}
 
+%% ===== COMBINED PROFILE (all sections, clipped) =====
+\\newpage
+
+\\section*{{Profile (all sections)}}
+
+\\begin{{figure}}[H]
+\\centering
+\\IfFileExists{{{base_name}.profile.all.pdf}}{{%
+    \\includegraphics[width=0.95\\textwidth,height=0.85\\textheight,keepaspectratio]{{{base_name}.profile.all.pdf}}
+}}{{%
+    \\textit{{(Combined profile: see {escape_latex(base_name)}.FCStd)}}
+}}
+\\caption{{Profile---Vaka, ama and rudder sections overlayed}}
+\\end{{figure}}
+
 %% ===== PROFILE - VAKA =====
 \\newpage
 
-\\section*{{Profile}}
+\\section*{{Profile Sections}}
     
 \\begin{{figure}}[H]
 \\centering
@@ -1414,7 +1516,7 @@ than the traditional half-sections used for symmetric hulls.
 %% ===== FULL BREADTH PLAN =====
 \\newpage
 
-\\section*{{Full Breadth Plan}}
+\\section*{{Full Breadth Plan (all horizontal sections)}}
     
 \\begin{{figure}}[H]
 \\centering
