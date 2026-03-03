@@ -3,7 +3,7 @@ from .sweep_graph_generation import generate_graph
 from .pyspice_simulator import begin_simulation
 from .circuit_constructor import build_circuit_from_json
 
-SWEEP_INTERVAL_COUNT = 100
+SWEEP_INTERVAL_COUNT = 1
 
 
 def sweep_throttle(circuit_setup: json, save_path, ngspice_available, 
