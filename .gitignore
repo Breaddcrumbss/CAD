@@ -10,3 +10,5 @@ artifacts/
 docs/dependency_graph.png
 /squashfs-root/
 *.AppImage
+freecad-python
+freecadcmd
