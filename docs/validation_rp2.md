@@ -184,15 +184,25 @@ The mast experiences significant bending loads when sailing in strong winds. The
 
 ### Method
 
-Wind force on the sail is estimated using:
+Wind force on the sail is estimated per mast using the formula from ISO 12215-10 Clause 7.2 Table 5 (case b, multihull SC1):
 
-$$F = \frac{1}{2} \rho V^2 C_d A$$
+$$F = \frac{0.72 \times V^2 \times A}{2}$$
 
-where *ρ* is air density, *V* is wind speed, *C_d* is drag coefficient, and *A* is sail area. The mast is analyzed for:
+where *V* is wind speed in m/s and *A* is total sail area. The division by 2 accounts for the load being shared between two masts. The mast is analyzed for:
 - Bending stress at the partner
 - Shear stress at the partner
 - Combined axial-bending interaction (column buckling)
 - Local buckling (D/t ratio check)
+
+The allowable bending force on the cylindrical mast is limited by bending stress at the partner:
+
+$$F_{allowable} = \frac{\sigma_y \times S}{d_{CE}}$$
+
+where *σ_y* is the yield strength (240 MPa for 6061-T6), *S* is the section modulus, and *d_CE* is the distance from the partner to the sail center of effort. The section modulus for a hollow cylindrical tube is:
+
+$$S = \frac{\pi (D^4 - d^4)}{32 D}$$
+
+where *D* is the outer diameter and *d = D - 2t* is the inner diameter. These are standard beam theory formulae applied to the mast geometry, as permitted by ISO 12215-10 Clause 5.3 (which allows any relevant engineering method for stress evaluation).
 
 ### Assumptions
 
@@ -201,6 +211,7 @@ where *ρ* is air density, *V* is wind speed, *C_d* is drag coefficient, and *A*
 - Mast section: {{ site.data.rp2_beaching_validate_structure.tests[3].geometry.mast_diameter_mm }} mm diameter × {{ site.data.rp2_beaching_validate_structure.tests[3].geometry.mast_thickness_mm }} mm wall
 - Material: 6061-T6 aluminum
 - Unstayed mast (no shrouds or stays)
+- Wind force per ISO 12215-10 Clause 7.2 Table 5; stress evaluation per Clause 5.3
 
 ### Results
 
