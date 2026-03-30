@@ -321,6 +321,26 @@ $(DESIGN_ARTIFACT): $(PARAMETER_ARTIFACT) $(DESIGN_SOURCE) | $(DESIGN_DIR)
 design: $(DESIGN_ARTIFACT)
 
 # ==============================================================================
+# ELECTRICAL PARAMETER COMPUTATION
+# ==============================================================================
+
+ELECTRICAL_PARAMETER_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).electrical_parameter.json
+ELECTRICAL_CONST_DIR := $(CONST_DIR)/electrical
+ELECTRICAL_CIRCUIT_FILE := $(ELECTRICAL_CONST_DIR)/boat/${BOAT}/circuit_setup.json
+ELECTRICAL_PARAMETER_SOURCE := $(wildcard $(SRC_DIR)/electrical_parameter/*.py)
+
+$(ELECTRICAL_PARAMETER_ARTIFACT): $(PARAMETER_ARTIFACT) $(ELECTRICAL_CIRCUIT_FILE) $(ELECTRICAL_PARAMETER_SOURCE)
+	@echo "Computing parameters for the electrical system of $(BOAT) and $(CONFIGURATION)..."
+	@mkdir -p $(ARTIFACT_DIR)
+	@$(PYTHON) -m src.electrical_parameter \
+		--params $(ELECTRICAL_CIRCUIT_FILE) $(PARAMETER_ARTIFACT) \
+		--output $@
+	@echo "✓ Computed electrical parameters saved to $@"
+
+.PHONY: electrical-parameter
+electrical-parameter: $(ELECTRICAL_PARAMETER_ARTIFACT)
+
+# ==============================================================================
 # ADD POWER CABLES
 # ==============================================================================
 
@@ -328,17 +348,17 @@ CABLES_DIR := $(SRC_DIR)/power_cables
 CABLES_SOURCE := $(wildcard $(CABLES_DIR)/*.py)
 CABLES_ARTIFACT := $(ARTIFACT_DIR)/$(BOAT).$(CONFIGURATION).cables.FCStd
 
-$(CABLES_ARTIFACT): $(DESIGN_ARTIFACT) $(CABLES_SOURCE) $(PARAMETER_ARTIFACT) | $(ARTIFACT_DIR)
+$(CABLES_ARTIFACT): $(DESIGN_ARTIFACT) $(CABLES_SOURCE) $(ELECTRICAL_PARAMETER_ARTIFACT) | $(ARTIFACT_DIR)
 	@echo "Adding power cables to: $(BOAT).$(CONFIGURATION)"
 	@if [ "$(UNAME)" = "Darwin" ]; then \
 		bash $(CABLES_DIR)/power_cables_mac.sh \
 			--design "$(DESIGN_ARTIFACT)" \
-			--params "$(PARAMETER_ARTIFACT)" \
+			--params "$(ELECTRICAL_PARAMETER_ARTIFACT)" \
 			--outputdesign "$(CABLES_ARTIFACT)"; \
 	else \
 		$(FREECAD_PYTHON) -m src.power_cables \
 			--design "$(DESIGN_ARTIFACT)" \
-			--params "$(PARAMETER_ARTIFACT)" \
+			--params "$(ELECTRICAL_PARAMETER_ARTIFACT)" \
 			--outputdesign "$(CABLES_ARTIFACT)"; \
 	fi
 	@echo "✓ Cables added: $(CABLES_ARTIFACT)"
