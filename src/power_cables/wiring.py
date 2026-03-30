@@ -1,5 +1,5 @@
 import Part
-import FreeCAD
+import FreeCAD as App
 from FreeCAD import Base
 
 
@@ -13,35 +13,38 @@ def create_sweep(group, profile, radius, vertices, name="SweepObject", color=(0.
         end = vertices[i+1]
         line = Part.makeLine(start, end)
         edges.append((line, f"Edge_{i+1}"))
-        print(f"Created edge {i} from {start} to {end}")
 
-    path_obj = group.addObject("Part::Feature", f"{name}Path")
-    path_obj.Shape = Part.Wire([edge[0] for edge in edges])
+    # Path where the wires will cross, made from vertices, straight lines joining them
+    path_obj = Part.Wire([edge[0] for edge in edges])
 
     if profile.lower() == "circle":
         # creating a profile for every sweep is inefficient, add functionality for reusing profile?
         direction = edges[0][0].tangentAt(0)
-        # print(f"Sweep direction: {direction}")
+
+        # Cross section of the wire
         profile_shape = Part.makeCircle(radius, edges[0][0].valueAt(0), direction)
-        profile_obj = group.addObject("Part::Feature", f"{name}Profile")
-        profile_obj.Shape = Part.Wire(profile_shape)
-        # print(f"Created circular profile with radius {radius}")
+        profile_wire = Part.Wire(profile_shape)
     
     else:
         raise ValueError(f"Profile type '{profile}' is not supported.")
 
-    sweep = group.addObject("Part::Sweep", name)
-    sweep.Sections = [profile_obj]
-    sweep.Spine = (path_obj, [edge[1] for edge in edges])
-    sweep.Solid = True
-    sweep.Frenet = True
-    sweep.Transition = 'Round corner'
+    sweep_shape = path_obj.makePipeShell([profile_wire], True, True, 2)
+
+    sweep = group.newObject("Part::Feature", name)
+    sweep.Shape = sweep_shape
 
     if hasattr(sweep, "ViewObject"):
         sweep.ViewObject.ShapeColor = color
 
     return sweep
 
+def create_object(group, placement, name="test object", colour=(50, 50, 50), size=50):
+    new_obj = group.newObject("Part::Feature", f"{name}")
+    new_obj.Shape = Part.makeSphere(size)
+    new_obj.Placement.Base = placement
+    new_obj.ViewObject.ShapeColor = colour
+    return new_obj
+    
 def generate_panel_matrix(params):
     """
     Generates a matrix of solar panel placements based on parameters from src/design/mirror.py.
@@ -51,11 +54,6 @@ def generate_panel_matrix(params):
     """
     panel_matrix = []
     
-    required_params = ['panels_longitudinal', 'panels_transversal', 'pillar_width', 'panel_length', 'crossdeck_width', 'panel_width', 'panel_base_level', 'panel_height']
-    if not all(k in params for k in required_params):
-        print("Warning: Missing one or more parameters for panel matrix generation. Wiring may be incomplete.")
-        return panel_matrix
-
     rows = params.get('panels_longitudinal', 0) // 2
     cols = params.get('panels_transversal', 0)
 
@@ -113,10 +111,12 @@ def wire_solar_panels(group, radius=5, params={}, string_direction='transverse')
     Generates wiring for all solar panels on both sides of the boat.
     
     Args:
-        group: The FreeCAD Document or Group object to add wires to.
+        group: The FreeCAD Document or Group object to add electrical components to.
         radius: Radius of the wire sweep.
         params: Dictionary of parameters for panel layout.
     """
+    
+    electrical_group = group.addObject("App::DocumentObjectGroup", "ElectricalComponents")
     
     # Wire colors to be used
     BLUE = (0.0, 0.0, 1.0)
@@ -150,10 +150,6 @@ def wire_solar_panels(group, radius=5, params={}, string_direction='transverse')
     # Get positive and negative endpoints for each panel
     positive_connections, negative_connections = get_connection_points(panel_matrix)
 
-    # Draw wires
-    dummy_positive_end = Base.Vector(0, 100, -100)
-    dummy_negative_end = Base.Vector(0, -100, -100)
-
     # Draw central wire
     central_x = panel_matrix[0][1][0][1] + params['deck_width'] / 3  # Place in the middle of the deck
     central_y_start = panel_matrix[0][0][1][1]
@@ -162,48 +158,85 @@ def wire_solar_panels(group, radius=5, params={}, string_direction='transverse')
 
     central_start = Base.Vector(central_x, central_y_start, central_z)
     central_end = Base.Vector(central_x, central_y_end, central_z)
+    centre = (central_start + central_end) * 0.5
 
-    create_sweep(group, "circle", radius, [central_start, central_end], name="Central_Wire")
+    create_sweep(electrical_group, "circle", radius, [central_start, central_end], name="Central_Wire")
 
-    k = params['panels_per_string']
+    # Place Batteries
+    num_batt_series = params["batteries_in_series"]
+    num_batt_parallel = params["batteries_in_parallel"]
+    batteries = []
+    batt_offset_vector = Base.Vector(0, 100, 0)
+    for i in range(num_batt_series*num_batt_parallel):
+        offset = (1 if i%2==0 else -1) * (i//2 + 1)
+        batt_location = centre + offset * batt_offset_vector
+        battery = create_object(electrical_group, batt_location, f"battery_{i}", colour=RED)
+        batteries.append(battery)
+
+        
+    # Place MPPT Trackers
+    num_mppt = params["num_mppt"]
+    mppts = []
+    mppt_offset_vector = batt_offset_vector * len(batteries)
+    for i in range(num_mppt):
+        # Placement of MPPTs is automatic currently, but may be ugly with odd number MPPTs
+        # Can change to different placement later 
+        offset = (1 if i%2==0 else -1) * (i//2 + 1)
+        mppt_location = centre + offset * mppt_offset_vector
+        mppt_unit = create_object(electrical_group, mppt_location, f"mppt_{i}", colour=BLUE)
+        mppts.append(mppt_unit)
+        
+    # TODO: Redo wire connections using new parameters, mppt stuff and mppt series panels
+
+    # Draw wires for panels
+    panel_series_per_mppt = params["panels_in_series_per_mppt"]
+    panel_parallel_per_mppt = params["panels_in_parallel_per_mppt"]
+    panels_per_mppt = params["panels_per_mppt"]
+    k = panel_series_per_mppt
     prev_point = None
+    prev_panel = (-1, -1)  # To keep track of the last panel for connecting wires
     counter = 0
 
+    # Assumption: Panels per string = Panels in series
     for i, panel_row in enumerate(panel_matrix):
         for j, panel in enumerate(panel_row):
             if i % 2 == 1:
                 j = (len(panel_row) - 1) - j  # Reverse order for every second row
 
             if counter % k == 0:
-                # Start of a new string, connect from central to positive end
+                # Start of new string, connect from correct MPPT unit to positive end of panel
                 panel_positive = positive_connections[i][j]
                 bend = Base.Vector(panel_positive[0], panel_positive[1], central_z)
-                central_point = Base.Vector(central_x, panel_positive[1], central_z)
-                wire_name = f"Panel_Wire_Pos_{i}_{j}"
+                mppt_idx = counter // panels_per_mppt
+                mppt_location = mppts[mppt_idx].Placement.Base
+                wire_name = f"panel_{i}_{j}_to_mppt_{mppt_idx}"
                 prev_point = negative_connections[i][j]
+                prev_panel = (i, j)
                 color = RED
-
-                create_sweep(group, "circle", radius, [panel_positive, bend, central_point], name=wire_name, color=color) # Blue wire
-
-
+                create_sweep(electrical_group, "circle", radius, [panel_positive, bend, mppt_location], name=wire_name, color=color) # Red wire from panel to mppt                  
+            
             else:
                 if (counter % k) == (k - 1):
-                    # End of a string, connect to negative end in central
+                    # End of a string, connect to negative terminal of mppt tracker, from panel
                     panel_negative = negative_connections[i][j]
                     bend = Base.Vector(panel_negative[0], panel_negative[1], central_z)
-                    central_point = Base.Vector(central_x, panel_negative[1], central_z)
-                    wire_name = f"Panel_Wire_Neg_{i}_{j}"
+                    mppt_idx = counter // panels_per_mppt
+                    mppt_location = mppts[mppt_idx].Placement.Base
+                    wire_name = f"panel_{i}_{j}_to_mppt_{mppt_idx}"
                     color = BLUE
 
-                    create_sweep(group, "circle", radius, [panel_negative, bend, central_point], name=wire_name, color=color) # Blue wire
+                    create_sweep(electrical_group, "circle", radius, [panel_negative, bend, mppt_location], name=wire_name, color=color) # Blue wire
 
                 # Connnect two panels
                 start_point = prev_point
                 end_point = positive_connections[i][j]
-                wire_name = f"Panel_Wire_Neg_to_Pos{i}_{j}"
+                wire_name = f"panel_{i}_{j}_to_panel_{prev_panel[0]}_{prev_panel[1]}"
                 prev_point = negative_connections[i][j]
+                prev_panel = (i, j)
                 color = PURPLE
             
-                create_sweep(group, "circle", radius, [start_point, end_point], name=wire_name, color=color)
+                create_sweep(electrical_group, "circle", radius, [start_point, end_point], name=wire_name, color=color)
 
             counter += 1
+
+    print("Created wiring for all panels")
